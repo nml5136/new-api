@@ -181,6 +181,9 @@ func Route(in *RouteInput) (*RouteResult, error) {
 	if pref == "" {
 		pref = in.Project.Preference
 	}
+	if pref == "" { // 项目与请求均未指定时，采用场景版本的默认偏好
+		pref = v.Preference
+	}
 	switch pref {
 	case "economy":
 		sort.SliceStable(res.Candidates, func(i, j int) bool { return res.Candidates[i].Est < res.Candidates[j].Est })

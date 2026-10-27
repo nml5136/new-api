@@ -161,6 +161,7 @@ type CatalogModel struct {
 	Id                int64  `json:"id" gorm:"primaryKey"`
 	ModelName         string `json:"model_name" gorm:"type:varchar(128);uniqueIndex"` // 与 New API 渠道模型名一致的具体模型
 	Vendor            string `json:"vendor" gorm:"type:varchar(64)"`
+	SupplierId        int64  `json:"supplier_id" gorm:"index"` // 所属供应商（hwao_supplier），0=未关联
 	DisplayName       string `json:"display_name" gorm:"type:varchar(128)"`
 	ContextLength     int    `json:"context_length"`
 	MaxOutput         int    `json:"max_output"`
@@ -178,6 +179,21 @@ type CatalogModel struct {
 }
 
 func (CatalogModel) TableName() string { return "hwao_model" }
+
+// Supplier 模型供应商：合同与联系人信息；模型通过 SupplierId 关联。
+type Supplier struct {
+	Id               int64  `json:"id" gorm:"primaryKey"`
+	Name             string `json:"name" gorm:"type:varchar(64);uniqueIndex"`
+	Contact          string `json:"contact" gorm:"type:varchar(128)"`    // 联系人/联系方式
+	ContractNo       string `json:"contract_no" gorm:"type:varchar(64)"` // 采购合同号
+	ContractExpireAt int64  `json:"contract_expire_at"`                  // 合同到期时间
+	Status           string `json:"status" gorm:"type:varchar(16)"`      // active/paused
+	Remark           string `json:"remark" gorm:"type:varchar(255)"`
+	CreatedAt        int64  `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt        int64  `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
+func (Supplier) TableName() string { return "hwao_supplier" }
 
 // PriceVersion 价格版本：每次调价新增一行，生效后仅作用于新请求（快照）。
 // 单价单位：分 / 百万 Token（人民币，含税标识见 TaxIncluded）。
@@ -244,7 +260,8 @@ type SceneVersion struct {
 	HasFallback      bool   `json:"has_fallback"` // 宣称具备兜底
 	Status           string `json:"status" gorm:"type:varchar(16)"`
 	ChangeReason     string `json:"change_reason" gorm:"type:varchar(255)"`
-	RolloutTenants   string `json:"rollout_tenants" gorm:"type:text"` // 小范围放量租户（逗号分隔，空=全量）
+	RolloutTenants   string `json:"rollout_tenants" gorm:"type:text"`   // 小范围放量租户（逗号分隔，空=全量）
+	Preference       string `json:"preference" gorm:"type:varchar(16)"` // 默认偏好 economy/balanced/quality（项目/请求未指定时生效）
 	CreatedBy        int    `json:"created_by"`
 	CreatedAt        int64  `json:"created_at" gorm:"autoCreateTime"`
 }
@@ -664,6 +681,6 @@ func AllModels() []any {
 		&Session{}, &SessionMessage{}, &Request{}, &Attempt{}, &BudgetCounter{},
 		&Reservation{}, &Idempotency{}, &Feedback{}, &EvalResult{}, &RechargeOrder{},
 		&Refund{}, &LedgerEntry{}, &ReconDiff{}, &SyncCursor{}, &Invoice{}, &Alert{},
-		&AuditLog{}, &Ticket{}, &Conversation{}, &ConversationMessage{},
+		&AuditLog{}, &Ticket{}, &Conversation{}, &ConversationMessage{}, &Supplier{},
 	}
 }

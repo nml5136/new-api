@@ -1,176 +1,183 @@
-import { useEffect, useState } from "react";
-import { Badge, Button, Card, Field, Input, Modal, Notice, PageHeader } from "@/components/base/ui";
+// 运营端 · 价格管理：价格版本列表（搜索/筛选/分页）、新建价格版本（采购价、零售价、缓存价、
+// 含税、客户合同价、生效时间、调价理由）、影响预览，以及向 New API 倍率的同步与回读重试（FR16/FR24）。
+import { useCallback, useState } from "react";
+import { Badge, Button, Card, Drawer, Field, Input, Notice, PageHeader, Select, Textarea } from "@/components/base/ui";
+import { DataTable, FilterSelect, Pager, RowBtn, SectionTitle, Toggle, Toolbar, f2y, localToTs, tsToLocal, useTable, y2f, type Column } from "@/components/ops/kit";
 import { useOps } from "@/lib/ops-data";
+import { ts2str } from "@/lib/api";
 import { cx, money } from "@/lib/format";
 
+const statusTone: Record<string, "success" | "warning" | "danger" | "neutral" | "primary"> = { 生效中: "success", 待生效: "primary", 同步失败: "danger", 历史: "neutral" };
+
 export default function OpsPricingPage() {
-  const { opsPriceVersions, act, notice, error } = useOps();
-  const [selected, setSelected] = useState("");
+  const { opsPriceVersions, opsModels, raw, act, notice, error, yuan, tenantName } = useOps();
+  const [status, setStatus] = useState("");
+  const [scope, setScope] = useState("");
+  const [model, setModel] = useState("");
+  const filter = useCallback((v: any) => (!status || v.status === status) && (!model || v.raw.model_name === model) && (!scope || (scope === "public" ? !v.raw.tenant_id : String(v.raw.tenant_id) === scope)), [status, scope, model]);
+  const text = useCallback((v: any) => `${v.model} ${v.scope} ${v.raw.reason || ""}`, []);
+  const t = useTable(opsPriceVersions, text, 10, filter);
+  const [form, setForm] = useState<any | null>(null);
+  const [errs, setErrs] = useState<Record<string, string>>({});
+  const [base, setBase] = useState<any>(null);
   const [inK, setInK] = useState("12");
   const [outK, setOutK] = useState("2");
-  const [newIn, setNewIn] = useState("");
-  const [newOut, setNewOut] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const version = opsPriceVersions.find((v) => v.id === selected) ?? opsPriceVersions[0];
-  const p: any = version?.raw ?? {};
-  // 价格单位：分 / 百万 Token；界面以元展示
-  const resetForm = () => { setNewIn(((p.input_price || 0) / 100).toFixed(2)); setNewOut(((p.output_price || 0) / 100).toFixed(2)); };
-  useEffect(() => { resetForm(); }, [version?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const per = (tokK: number, yuanPerM: number) => (tokK * 1000 / 1e6) * yuanPerM;
-  const inTokens = Number(inK) || 0;
-  const outTokens = Number(outK) || 0;
-  const before = per(inTokens, (p.input_price || 0) / 100) + per(outTokens, (p.output_price || 0) / 100);
-  const after = per(inTokens, Number(newIn) || 0) + per(outTokens, Number(newOut) || 0);
-  const cost = per(inTokens, (p.cost_input_price || 0) / 100) + per(outTokens, (p.cost_output_price || 0) / 100);
-  const margin = ((after - cost) / (after || 1)) * 100;
-  const submit = async () => {
-    setConfirmOpen(false);
-    await act("POST", "/prices", {
-      ...p, id: 0, input_price: Math.round((Number(newIn) || 0) * 100), output_price: Math.round((Number(newOut) || 0) * 100),
-      effective_at: 0, reason: "运营后台价格变更",
-    }, "价格新版本已发布，仅影响生效后的新请求");
+  const set = (k: string, v: unknown) => setForm((f: any) => ({ ...f, [k]: v }));
+  // 由某个现有版本（或空白）打开新版本表单；金额以元编辑
+  const open = (p?: any) => {
+    setErrs({});
+    setBase(p || null);
+    setForm({
+      model_name: p?.model_name || opsModels[0]?.model_name || "", tenant_id: p?.tenant_id || 0, tax_included: p ? p.tax_included : true,
+      cost_input_price: f2y(p?.cost_input_price), cost_output_price: f2y(p?.cost_output_price), input_price: f2y(p?.input_price), output_price: f2y(p?.output_price),
+      cache_read_price: f2y(p?.cache_read_price), cache_write_price: f2y(p?.cache_write_price), effective_at: "", reason: "",
+    });
   };
-  if (!version) {
-    return (
-      <div>
-        <PageHeader eyebrow="价格管理" title="价格版本与变更预览" />
-        <Card className="p-6 text-center text-xs text-foreground-500">{error || "暂无价格版本。"}</Card>
-      </div>
-    );
-  }
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.model_name) e.model_name = "请选择模型";
+    for (const k of ["cost_input_price", "cost_output_price", "input_price", "output_price", "cache_read_price", "cache_write_price"]) if (Number(form[k]) < 0 || Number.isNaN(Number(form[k]))) e[k] = "须为非负数";
+    if (!(Number(form.input_price) > 0) || !(Number(form.output_price) > 0)) e.input_price = "零售价须大于 0";
+    if (Number(form.input_price) < Number(form.cost_input_price) || Number(form.output_price) < Number(form.cost_output_price)) e.margin = "零售价低于采购价，将亏损销售";
+    if (form.effective_at && localToTs(form.effective_at) < Date.now() / 1000 - 60) e.effective_at = "生效时间不能早于现在";
+    if (form.reason.trim().length < 4) e.reason = "请填写调价理由（至少 4 个字）";
+    setErrs(e);
+    return Object.keys(e).filter((k) => k !== "margin").length === 0;
+  };
+  const submit = async () => {
+    if (!validate()) return;
+    const body = {
+      model_name: form.model_name, tenant_id: Number(form.tenant_id) || 0, tax_included: form.tax_included,
+      cost_input_price: y2f(form.cost_input_price), cost_output_price: y2f(form.cost_output_price), input_price: y2f(form.input_price), output_price: y2f(form.output_price),
+      cache_read_price: y2f(form.cache_read_price), cache_write_price: y2f(form.cache_write_price), effective_at: localToTs(form.effective_at), reason: form.reason,
+    };
+    const r = await act("POST", "/prices", body, "价格新版本已发布并同步 New API 倍率，仅影响生效后的新请求");
+    if (r !== undefined) setForm(null);
+  };
+
+  // 影响预览：按示例用量估算单次费用与毛利
+  const per = (tokK: number, yuanPerM: number) => (tokK * 1000 / 1e6) * yuanPerM;
+  const preview = form ? (() => {
+    const i = Number(inK) || 0, o = Number(outK) || 0;
+    const before = base ? per(i, base.input_price / 100) + per(o, base.output_price / 100) : 0;
+    const after = per(i, Number(form.input_price) || 0) + per(o, Number(form.output_price) || 0);
+    const cost = per(i, Number(form.cost_input_price) || 0) + per(o, Number(form.cost_output_price) || 0);
+    return { before, after, cost, margin: after ? ((after - cost) / after) * 100 : 0 };
+  })() : null;
+
+  const cols: Column<any>[] = [
+    { key: "m", title: "模型 / 版本", width: "1.4fr", render: (v) => <div><p className="font-medium text-foreground-950">{v.raw.model_name}</p><p className="text-[10px] text-foreground-500">v{v.raw.version} · {v.tax}</p></div> },
+    { key: "s", title: "适用范围", width: "0.9fr", render: (v) => <Badge tone={v.raw.tenant_id ? "accent" : "neutral"}>{v.raw.tenant_id ? `合同价 · ${v.scope}` : "公开零售"}</Badge> },
+    { key: "p", title: "采购价 入/出", width: "1fr", render: (v) => <span className="tnum text-[10.5px] text-foreground-600">{v.purchase}</span> },
+    { key: "r", title: "零售价 入/出", width: "1fr", render: (v) => <span className="tnum text-[10.5px] font-medium text-foreground-900">{v.retail}</span> },
+    { key: "c", title: "缓存 读/写", width: "0.9fr", render: (v) => <span className="tnum text-[10.5px] text-foreground-600">{yuan(v.raw.cache_read_price)} / {yuan(v.raw.cache_write_price)}</span> },
+    { key: "e", title: "生效时间", width: "1fr", render: (v) => <span className="text-[10.5px] text-foreground-600">{ts2str(v.raw.effective_at).slice(0, 16)}</span> },
+    { key: "st", title: "状态 / 同步", width: "1fr", render: (v) => (
+      <div className="flex flex-wrap gap-1"><Badge tone={statusTone[v.status] || "neutral"}>{v.status}</Badge>
+        <Badge tone={v.raw.sync_status === "ok" ? "success" : v.raw.sync_status === "failed" ? "danger" : "warning"}>{v.raw.sync_status === "ok" ? "已回读" : v.raw.sync_status === "failed" ? "同步失败" : "待同步"}</Badge></div>
+    ) },
+    { key: "op", title: "操作", width: "1.2fr", align: "right", render: (v) => (
+      <>
+        <RowBtn onClick={() => open(v.raw)}>基于此调价</RowBtn>
+        <RowBtn title="重新写入 New API 倍率并回读核对" onClick={() => void act("POST", `/prices/${v.raw.id}/resync`, {}, `${v.raw.model_name} v${v.raw.version} 已重新同步并回读一致`)}>重新同步</RowBtn>
+      </>
+    ) },
+  ];
+
+  const failed = opsPriceVersions.filter((v) => v.raw.sync_status === "failed").length;
 
   return (
     <div>
       <PageHeader
         eyebrow="价格管理"
-        title="价格版本与变更预览"
-        description="采购价仅运营可见，客户零售价按版本生效。已开始的任务绑定原版本，新价格只影响生效后的新请求。"
+        title="价格版本、同步与回读"
+        description="每次调价生成新版本（采购价、零售价、缓存价、生效时间与理由），发布后写入 New API 倍率并回读核对；已开始的请求按原价格快照结算。"
+        actions={<Button onClick={() => open()}><i className="ri-add-line" />新建价格版本</Button>}
       />
-
       {notice ? <Notice tone="success" icon="ri-check-line" className="mb-3">{notice}</Notice> : null}
       {error ? <Notice tone="danger" icon="ri-error-warning-line" className="mb-3">{error}</Notice> : null}
+      {failed ? <Notice tone="warning" icon="ri-error-warning-line" className="mb-3">{failed} 个价格版本同步 New API 失败，可在列表中“重新同步”。</Notice> : null}
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <Card className="overflow-hidden">
-          <div className="hidden grid-cols-[0.9fr_1.1fr_1.1fr_0.7fr_0.9fr] gap-2 border-b border-background-200 bg-background-100/50 px-4 py-2 text-[10px] text-foreground-500 md:grid">
-            <span>模型</span>
-            <span>采购价（运营）</span>
-            <span>客户零售价</span>
-            <span>范围</span>
-            <span>状态 / 生效</span>
-          </div>
-          <div className="divide-y divide-background-100">
-            {opsPriceVersions.map((row) => (
-              <button
-                key={row.id}
-                type="button"
-                onClick={() => setSelected(row.id)}
-                className={cx(
-                  "grid w-full cursor-pointer grid-cols-1 gap-1 px-4 py-3 text-left text-[10.5px] transition-colors md:grid-cols-[0.9fr_1.1fr_1.1fr_0.7fr_0.9fr] md:items-center md:gap-2",
-                  selected === row.id ? "bg-primary-50/50" : "hover:bg-background-100/50",
-                )}
-              >
-                <span className="text-[11px] font-medium text-foreground-900">{row.model}</span>
-                <span className="tnum text-foreground-500">{row.purchase}</span>
-                <span className="tnum text-foreground-900">{row.retail}</span>
-                <span className="text-foreground-600">{row.scope}</span>
-                <span>
-                  <Badge tone={row.status === "生效中" ? "success" : "neutral"}>{row.status}</Badge>
-                  <span className="mt-0.5 block text-[9px] text-foreground-400">{row.effective}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="border-t border-background-200 px-4 py-2.5 text-[9.5px] text-foreground-400">
-            采购价来源为上游结算，展示前需标注预估或已对账；客户侧不显示该列。
-          </div>
-        </Card>
+      <Card className="overflow-hidden">
+        <Toolbar
+          q={t.q}
+          setQ={t.setQ}
+          placeholder="搜索模型、客户、调价理由"
+          filters={<>
+            <FilterSelect label="模型" value={model} onChange={setModel} options={Array.from(new Set(opsPriceVersions.map((v) => v.raw.model_name))).map((m) => [m, m])} />
+            <FilterSelect label="范围" value={scope} onChange={setScope} options={[["public", "公开零售"], ...raw.tenants.map((x: any) => [String(x.tenant.id), x.tenant.name] as [string, string])]} />
+            <FilterSelect label="状态" value={status} onChange={setStatus} options={[["生效中", "生效中"], ["待生效", "待生效"], ["同步失败", "同步失败"], ["历史", "历史"]]} />
+          </>}
+        />
+        <DataTable columns={cols} rows={t.paged} rowKey={(v) => v.id} empty="没有匹配的价格版本" />
+        <Pager page={t.page} pages={t.pages} total={t.total} setPage={t.setPage} />
+      </Card>
+      <p className="mt-2 text-[10px] text-foreground-400">单位：元 / 百万 Token。客户合同价优先于公开零售价。</p>
 
-        <Card className="p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground-950">{version.model} · 变更预览</h2>
-              <p className="mt-0.5 text-[10px] text-foreground-500">#{version.id} · {version.tax} · {version.scope}</p>
-            </div>
-            <Badge tone={version.status === "生效中" ? "success" : "warning"}>{version.status}</Badge>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Field label="新输入价（元 / 百万）">
-              <Input type="number" step={0.01} value={newIn} onChange={(e) => setNewIn(e.target.value)} />
-            </Field>
-            <Field label="新输出价（元 / 百万）">
-              <Input type="number" step={0.01} value={newOut} onChange={(e) => setNewOut(e.target.value)} />
-            </Field>
-          </div>
-
-          <div className="mt-4 rounded-xl bg-background-100/60 p-3">
-            <p className="mb-2 text-[10px] font-medium text-foreground-700">同一用量下的费用变化</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="输入（千 Token）"><Input type="number" value={inK} onChange={(e) => setInK(e.target.value)} /></Field>
-              <Field label="输出（千 Token）"><Input type="number" value={outK} onChange={(e) => setOutK(e.target.value)} /></Field>
-            </div>
-            <div className="mt-3 space-y-1.5 text-[10.5px]">
-              <div className="flex justify-between text-foreground-600"><span>变更前</span><span className="tnum">{money(before, 3)}</span></div>
-              <div className="flex justify-between font-medium text-foreground-950"><span>变更后</span><span className="tnum">{money(after, 3)}</span></div>
-              <div className={cx("flex justify-between border-t border-background-200 pt-1.5", after > before ? "text-warning" : "text-success")}>
-                <span>差额</span>
-                <span className="tnum">{`${after - before >= 0 ? "+" : ""}${money(after - before, 3)}`}</span>
-              </div>
-              <div className="flex justify-between text-foreground-500"><span>变更后毛利率（按采购价）</span><span className="tnum">{margin.toFixed(1)}%</span></div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button onClick={() => setConfirmOpen(true)} disabled={!(Number(newIn) > 0)}>提交价格变更</Button>
-            <Button variant="outline" onClick={resetForm}>重置</Button>
-            {p.sync_status === "failed" ? <span className="text-[9.5px] text-warning">该版本同步 New API 失败，请检查后重新发布</span> : null}
-          </div>
-        </Card>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {[
-          { title: "价格快照", body: "已开始任务绑定发起时的价格版本。若底层无法提供快照，不应发布价格承诺。" },
-          { title: "含税与范围", body: "价格需标注是否含税与适用范围。授权未覆盖的模型不参与对客展示。" },
-          { title: "生效时间", body: "价格变更仅影响生效后的新请求，历史消费记录保持原价。" },
-        ].map((item) => (
-          <Card key={item.title} className="p-4">
-            <p className="text-[11px] font-medium text-foreground-900">{item.title}</p>
-            <p className="mt-1 text-[10px] leading-relaxed text-foreground-600">{item.body}</p>
-          </Card>
-        ))}
-      </div>
-
-      <Modal
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        title="提交价格变更"
-        description="请确认价格影响范围与生效方式。"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>取消</Button>
-            <Button
-              onClick={() => void submit()}
-            >
-              确认提交
-            </Button>
-          </>
-        }
+      <Drawer
+        open={Boolean(form)}
+        onClose={() => setForm(null)}
+        title={base ? `调价 · ${base.model_name}（基于 v${base.version}）` : "新建价格版本"}
+        subtitle="保存即发布新版本：到达生效时间后作用于新请求，并同步 New API 倍率"
+        width="sm:max-w-[620px]"
+        footer={<div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setForm(null)}>取消</Button><Button onClick={() => void submit()}>发布价格版本</Button></div>}
       >
-        <div className="space-y-2 text-[11px]">
-          <div className="rounded-xl border border-background-200 p-3 space-y-1.5 text-foreground-700">
-            <div className="flex justify-between"><span>模型</span><span className="font-medium">{version.model}</span></div>
-            <div className="flex justify-between"><span>原零售价</span><span className="tnum">{version.retail}</span></div>
-            <div className="flex justify-between"><span>新零售价</span><span className="tnum font-medium">{money(Number(newIn) || 0)} / {money(Number(newOut) || 0)}</span></div>
-            <div className="flex justify-between"><span>生效时间</span><span className="font-medium">提交审核通过后次日 00:00</span></div>
+        {form ? (
+          <div className="space-y-4">
+            <SectionTitle>适用范围</SectionTitle>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="模型 *" error={errs.model_name}>
+                <Select value={form.model_name} onChange={(e) => set("model_name", e.target.value)}>
+                  {opsModels.map((m: any) => <option key={m.id} value={m.model_name}>{m.model_name}</option>)}
+                </Select>
+              </Field>
+              <Field label="价格类型">
+                <Select value={form.tenant_id} onChange={(e) => set("tenant_id", Number(e.target.value))}>
+                  <option value={0}>公开零售价</option>
+                  {raw.tenants.map((x: any) => <option key={x.tenant.id} value={x.tenant.id}>客户合同价 · {x.tenant.name}</option>)}
+                </Select>
+              </Field>
+            </div>
+            <SectionTitle>采购价（元 / 百万 Token）</SectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="输入" error={errs.cost_input_price}><Input type="number" step="0.01" value={form.cost_input_price} onChange={(e) => set("cost_input_price", e.target.value)} /></Field>
+              <Field label="输出" error={errs.cost_output_price}><Input type="number" step="0.01" value={form.cost_output_price} onChange={(e) => set("cost_output_price", e.target.value)} /></Field>
+            </div>
+            <SectionTitle>零售价（元 / 百万 Token）</SectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="输入 *" error={errs.input_price}><Input type="number" step="0.01" value={form.input_price} onChange={(e) => set("input_price", e.target.value)} /></Field>
+              <Field label="输出 *" error={errs.output_price}><Input type="number" step="0.01" value={form.output_price} onChange={(e) => set("output_price", e.target.value)} /></Field>
+              <Field label="缓存命中" error={errs.cache_read_price}><Input type="number" step="0.01" value={form.cache_read_price} onChange={(e) => set("cache_read_price", e.target.value)} /></Field>
+              <Field label="缓存写入" error={errs.cache_write_price}><Input type="number" step="0.01" value={form.cache_write_price} onChange={(e) => set("cache_write_price", e.target.value)} /></Field>
+            </div>
+            <Toggle label="价格含税" checked={form.tax_included} onChange={(v) => set("tax_included", v)} />
+            <SectionTitle>生效与理由</SectionTitle>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="生效时间" hint="留空立即生效" error={errs.effective_at}><Input type="datetime-local" value={form.effective_at} min={tsToLocal(Math.floor(Date.now() / 1000))} onChange={(e) => set("effective_at", e.target.value)} /></Field>
+              <Field label="调价理由 *" error={errs.reason} className="sm:col-span-2"><Textarea rows={2} className="!min-h-[60px]" value={form.reason} onChange={(e) => set("reason", e.target.value)} placeholder="如：上游采购价下调，同步调整零售价" /></Field>
+            </div>
+            {preview ? (
+              <div className="rounded-xl border border-background-200 bg-background-100/50 p-3">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-foreground-600">
+                  <span>影响预览：单次输入</span>
+                  <Input className="!h-8 !w-16 text-xs" value={inK} onChange={(e) => setInK(e.target.value)} />
+                  <span>K / 输出</span>
+                  <Input className="!h-8 !w-16 text-xs" value={outK} onChange={(e) => setOutK(e.target.value)} />
+                  <span>K Token</span>
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                  {[["原价", base ? money(preview.before) : "—"], ["新价", money(preview.after)], ["毛利率", `${preview.margin.toFixed(1)}%`]].map(([l, v]) => (
+                    <div key={l} className="rounded-lg bg-background-50 p-2"><p className="text-[10px] text-foreground-500">{l}</p><p className={cx("tnum mt-0.5 text-sm font-semibold", l === "毛利率" && preview.margin < 0 ? "text-danger" : "text-foreground-900")}>{v}</p></div>
+                  ))}
+                </div>
+                {errs.margin ? <p className="mt-2 text-[10.5px] text-warning">{errs.margin}</p> : null}
+              </div>
+            ) : null}
+            {form.tenant_id ? <p className="text-[10.5px] text-foreground-500">合同价仅对 {tenantName(form.tenant_id)} 生效，New API 倍率仍以公开零售价为准。</p> : null}
           </div>
-          <Notice tone="neutral" icon="ri-information-line">
-            仅影响生效后的新请求。已开始任务仍绑定原价格版本；若底层版本不支持价格快照，需先完成适配。
-          </Notice>
-        </div>
-      </Modal>
+        ) : null}
+      </Drawer>
     </div>
   );
 }

@@ -172,6 +172,7 @@ CREATE TABLE IF NOT EXISTS `hwao_model` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `model_name` varchar(128) DEFAULT NULL,
   `vendor` varchar(64) DEFAULT NULL,
+  `supplier_id` bigint(20) DEFAULT NULL,
   `display_name` varchar(128) DEFAULT NULL,
   `context_length` bigint(20) DEFAULT NULL,
   `max_output` bigint(20) DEFAULT NULL,
@@ -188,7 +189,8 @@ CREATE TABLE IF NOT EXISTS `hwao_model` (
   `updated_at` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_hwao_model_model_name` (`model_name`),
-  KEY `idx_hwao_model_status` (`status`)
+  KEY `idx_hwao_model_status` (`status`),
+  KEY `idx_hwao_model_supplier_id` (`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS `hwao_platform_key` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -418,6 +420,7 @@ CREATE TABLE IF NOT EXISTS `hwao_scene_version` (
   `status` varchar(16) DEFAULT NULL,
   `change_reason` varchar(255) DEFAULT NULL,
   `rollout_tenants` text DEFAULT NULL,
+  `preference` varchar(16) DEFAULT NULL,
   `created_by` bigint(20) DEFAULT NULL,
   `created_at` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -556,3 +559,20 @@ CREATE TABLE IF NOT EXISTS `hwao_conversation_message` (
   KEY `idx_hwao_conversation_message_conv_id` (`conv_id`),
   KEY `idx_hwao_conversation_message_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- 模型供应商（运营端“资源与集成 · 供应商”）
+CREATE TABLE IF NOT EXISTS `hwao_supplier` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) DEFAULT NULL,
+  `contact` varchar(128) DEFAULT NULL,
+  `contract_no` varchar(64) DEFAULT NULL,
+  `contract_expire_at` bigint(20) DEFAULT NULL,
+  `status` varchar(16) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL,
+  `created_at` bigint(20) DEFAULT NULL,
+  `updated_at` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_hwao_supplier_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- 存量库升级（运营端补全）：模型关联供应商、场景版本默认偏好（MariaDB 支持 IF NOT EXISTS；MySQL 8 请去掉后执行一次）
+ALTER TABLE `hwao_model` ADD COLUMN IF NOT EXISTS `supplier_id` bigint(20) DEFAULT NULL, ADD INDEX IF NOT EXISTS `idx_hwao_model_supplier_id` (`supplier_id`);
+ALTER TABLE `hwao_scene_version` ADD COLUMN IF NOT EXISTS `preference` varchar(16) DEFAULT NULL;

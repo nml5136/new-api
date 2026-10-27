@@ -39,3 +39,19 @@
 - 测试桩：runtime/mock_upstream.py（仓库外）已支持 stream，仅用于联调，可删除并把渠道 1 指回真实上游。
 - 未改动 New API 上游文件。
 - 2026-10-27：对话标题去除 Markdown 语法（hwao/hapi/chat.go plainTitle；前端展示兼容历史标题）。
+
+## 2026-10-27 运营后台补全（资源与集成 / 场景策略 / 各页增删改）
+- hwao/hmodel/models.go：新增 Supplier（hwao_supplier）；CatalogModel 增加 supplier_id；SceneVersion 增加 preference。
+- hwao/hservice/routing.go：请求与项目未指定偏好时使用场景版本默认偏好。
+- hwao/hapi/ops.go：模型保存校验供应商；场景版本保存增加字段校验。
+- hwao/hapi/ops_ext.go（新）：供应商 CRUD、模型删除、价格重新同步、场景编辑/克隆/删除、草稿编辑、租户放量、邀请码作废、企业编辑。
+- hwao/hapi/ops_channel.go（新）：New API 渠道适配层（进程内调用 New API 渠道控制器；列表/新建/编辑/启停/删除/测试/余额/全局重试次数），密钥只写不读、响应递归剔除 key。
+- hwao/hapi/router.go：注册以上路由（渠道路由沿用 New API 渠道权限点）。
+- sql/mysql/hwao_router.sql：hwao_supplier 建表、supplier_id / preference 字段与升级语句。
+- web-hwao/src/components/ops/kit.tsx（新）：表格搜索/筛选/分页、确认弹窗、开关等运营通用组件。
+- web-hwao/src/lib/ops-data.ts：加载供应商。
+- web-hwao/src/pages/ops/resources：模型目录 / New API 渠道 / 供应商 / 变更记录 四个标签页的完整增删改。
+- web-hwao/src/pages/ops/pricing：价格版本表格与新建版本抽屉（采购/零售/缓存价、含税、合同价、生效时间、理由、影响预览）、重新同步。
+- web-hwao/src/pages/ops/scenes：场景新建/编辑/克隆/删除、版本草稿抽屉（候选排序）、评测通过、发布、回滚、停用/启用、租户放量。
+- web-hwao/src/pages/ops/customers：企业搜索/筛选/分页、编辑预算与并发、邀请码作废。
+- web-hwao/src/pages/ops/finance：登记线下充值（待确认到账后入账）。

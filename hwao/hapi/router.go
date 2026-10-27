@@ -9,6 +9,7 @@ import (
 	"github.com/QuantumNous/new-api/hwao/hmodel"
 	"github.com/QuantumNous/new-api/hwao/hservice"
 	"github.com/QuantumNous/new-api/middleware"
+	"github.com/QuantumNous/new-api/service/authz"
 	"github.com/gin-gonic/gin"
 )
 
@@ -95,6 +96,30 @@ func SetRouter(r *gin.Engine) {
 	o.GET("/alerts", opsAlerts)
 	o.PUT("/alerts/:id", opsAlertUpdate)
 	o.GET("/audit", opsAudit)
+	// 补充：供应商、模型删除、价格重同步、场景编辑/克隆/放量、邀请码撤销、企业编辑
+	o.GET("/suppliers", opsListSuppliers)
+	o.POST("/suppliers", opsSaveSupplier)
+	o.PUT("/suppliers/:id", opsSaveSupplier)
+	o.DELETE("/suppliers/:id", opsDeleteSupplier)
+	o.DELETE("/models/:id", opsDeleteModel)
+	o.POST("/prices/:id/resync", opsResyncPrice)
+	o.PUT("/scenes/:id", opsUpdateScene)
+	o.DELETE("/scenes/:id", opsDeleteScene)
+	o.POST("/scenes/:id/clone", opsCloneScene)
+	o.PUT("/scene-versions/:id", opsUpdateSceneVersion)
+	o.PUT("/scene-versions/:id/rollout", opsSceneRollout)
+	o.DELETE("/invites/:id", opsRevokeInvite)
+	o.PUT("/tenants/:id", opsUpdateTenant)
+	// New API 渠道适配层：权限与 New API /api/channel 路由保持一致
+	o.GET("/channels", middleware.RequirePermission(authz.ChannelRead), opsListChannels)
+	o.GET("/channels/meta", middleware.RequirePermission(authz.ChannelRead), opsChannelMeta)
+	o.POST("/channels", middleware.RequirePermission(authz.ChannelSensitiveWrite), opsCreateChannel)
+	o.PUT("/channels/:id", middleware.RequirePermission(authz.ChannelWrite), opsUpdateChannel)
+	o.POST("/channels/:id/status", middleware.RequirePermission(authz.ChannelOperate), opsChannelStatus)
+	o.DELETE("/channels/:id", middleware.RequirePermission(authz.ChannelSensitiveWrite), opsDeleteChannel)
+	o.POST("/channels/:id/test", middleware.RequirePermission(authz.ChannelOperate), opsTestChannel)
+	o.POST("/channels/:id/balance", middleware.RequirePermission(authz.ChannelOperate), opsChannelBalance)
+	o.PUT("/channel-settings", middleware.RequirePermission(authz.ChannelSensitiveWrite), opsChannelSettings)
 
 	serveWeb(r)
 }

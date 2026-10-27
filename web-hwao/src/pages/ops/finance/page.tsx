@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Badge, Button, Card, Field, Input, Notice, PageHeader, Tabs } from "@/components/base/ui";
+import { Badge, Button, Card, Field, Input, Modal, Notice, PageHeader, Select, Tabs } from "@/components/base/ui";
 import { useOps } from "@/lib/ops-data";
 import { cx } from "@/lib/format";
 
@@ -9,7 +9,18 @@ type Item = { key: string; kind: "diff" | "order" | "refund"; type: string; subj
 const tabMap: Record<string, string> = { payment: "支付对账", consume: "消费对账", purchase: "上游采购", refund: "退款" };
 
 export default function OpsFinancePage() {
-  const { opsFinanceDiffs, opsOrders, opsRefunds, yuan, act, notice, error, loading } = useOps();
+  const { opsFinanceDiffs, opsOrders, opsRefunds, yuan, act, notice, error, loading, raw } = useOps();
+  // 登记线下充值：生成待确认的支付订单，仍需“确认到账”后才入账
+  const [rcOpen, setRcOpen] = useState(false);
+  const [rc, setRc] = useState({ tenant_id: "", amount: "", pay_channel: "transfer", voucher: "", remark: "" });
+  const [rcErr, setRcErr] = useState("");
+  const submitRc = async () => {
+    if (!rc.tenant_id) return setRcErr("请选择企业");
+    if (!(Number(rc.amount) > 0)) return setRcErr("金额须大于 0");
+    if (rc.voucher.trim().length < 2) return setRcErr("请填写凭证号");
+    const r = await act("POST", "/recharges", { tenant_id: Number(rc.tenant_id), amount: Math.round(Number(rc.amount) * 100), kind: "pay", pay_channel: rc.pay_channel, voucher: rc.voucher, remark: rc.remark }, "充值订单已登记，待确认到账后入账");
+    if (r !== undefined) { setRcOpen(false); setRc({ tenant_id: "", amount: "", pay_channel: "transfer", voucher: "", remark: "" }); }
+  };
   const [tab, setTab] = useState("payment");
   const [selected, setSelected] = useState("");
   const [tradeNo, setTradeNo] = useState("");
@@ -93,7 +104,7 @@ export default function OpsFinancePage() {
         eyebrow="对账与退款"
         title="先看差异，再处理差异"
         description="详情采用左右对照：平台记录与外部记录。差异字段高亮，不允许用删除原记录来消除差异。"
-        actions={<Button variant="outline" onClick={() => void act("POST", "/recon/run", undefined, "对账已执行")}><i className="ri-refresh-line" />立即对账</Button>}
+        actions={<><Button variant="outline" onClick={() => { setRcErr(""); setRcOpen(true); }}><i className="ri-bank-card-line" />登记线下充值</Button><Button variant="outline" onClick={() => void act("POST", "/recon/run", undefined, "对账已执行")}><i className="ri-refresh-line" />立即对账</Button></>}
       />
 
       {notice ? <Notice tone="success" icon="ri-check-line" className="mb-3">{notice}</Notice> : null}
@@ -187,6 +198,22 @@ export default function OpsFinancePage() {
           </Card>
         ) : null}
       </div>
+      <Modal
+        open={rcOpen}
+        onClose={() => setRcOpen(false)}
+        title="登记线下充值"
+        description="对公转账等线下到账：先登记订单，核对银行流水后在“支付对账”中确认到账才会入账。"
+        footer={<><Button variant="outline" onClick={() => setRcOpen(false)}>取消</Button><Button onClick={() => void submitRc()}>登记</Button></>}
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="企业 *"><Select value={rc.tenant_id} onChange={(e) => setRc({ ...rc, tenant_id: e.target.value })}><option value="">请选择</option>{raw.tenants.map((x: any) => <option key={x.tenant.id} value={x.tenant.id}>{x.tenant.name}</option>)}</Select></Field>
+          <Field label="金额（元）*"><Input type="number" value={rc.amount} onChange={(e) => setRc({ ...rc, amount: e.target.value })} /></Field>
+          <Field label="渠道"><Select value={rc.pay_channel} onChange={(e) => setRc({ ...rc, pay_channel: e.target.value })}><option value="transfer">对公转账</option><option value="manual">其他线下</option></Select></Field>
+          <Field label="凭证号 *"><Input value={rc.voucher} onChange={(e) => setRc({ ...rc, voucher: e.target.value })} /></Field>
+          <Field label="备注" className="sm:col-span-2"><Input value={rc.remark} onChange={(e) => setRc({ ...rc, remark: e.target.value })} /></Field>
+          {rcErr ? <p className="text-[11px] text-danger sm:col-span-2">{rcErr}</p> : null}
+        </div>
+      </Modal>
     </div>
   );
 }

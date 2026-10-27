@@ -107,6 +107,15 @@ func opsSaveModel(c *gin.Context) {
 	if id := idParam(c); id > 0 {
 		m.Id = id
 	}
+	// 关联供应商时以供应商名称作为 vendor 展示
+	if m.SupplierId > 0 {
+		var s hmodel.Supplier
+		if hservice.DB().First(&s, m.SupplierId).Error != nil {
+			fail(c, hservice.ErrInvalid("供应商不存在"))
+			return
+		}
+		m.Vendor = s.Name
+	}
 	reply(c, m, hservice.SaveModel(c.GetInt("id"), m))
 }
 
@@ -150,6 +159,14 @@ func opsSaveSceneVersion(c *gin.Context) {
 		Version     hmodel.SceneVersion `json:"version"`
 	}](c)
 	if !k {
+		return
+	}
+	if req.SceneId == "" || (req.Name == "" && !sceneExists(req.SceneId)) {
+		fail(c, hservice.ErrInvalid("场景 ID 与名称必填"))
+		return
+	}
+	if err := validateSceneVersion(&req.Version); err != nil {
+		fail(c, err)
 		return
 	}
 	reply(c, req.Version, hservice.SaveSceneVersion(c.GetInt("id"), req.SceneId, req.Name, req.Description, &req.Version))
@@ -306,4 +323,11 @@ func opsRequests(c *gin.Context) {
 		items = append(items, requestView(&rs[i], true))
 	}
 	ok(c, gin.H{"items": items, "total": total})
+}
+
+// sceneExists 判断场景是否已存在
+func sceneExists(id string) bool {
+	var n int64
+	hservice.DB().Model(&hmodel.Scene{}).Where("scene_id = ?", id).Count(&n)
+	return n > 0
 }

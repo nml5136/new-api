@@ -26,9 +26,10 @@ export interface OpsRaw {
   finance: { orders: any[]; refunds: any[]; diffs: any[] };
   alerts: any[];
   audit: any[];
+  suppliers: any[];
 }
 
-const empty: OpsRaw = { overview: {}, tenants: [], invites: [], models: [], prices: [], scenes: [], finance: { orders: [], refunds: [], diffs: [] }, alerts: [], audit: [] };
+const empty: OpsRaw = { overview: {}, tenants: [], invites: [], models: [], prices: [], scenes: [], finance: { orders: [], refunds: [], diffs: [] }, alerts: [], audit: [], suppliers: [] };
 
 // useOps 一次性加载运营端数据；act 执行写操作后自动刷新
 export function useOps() {
@@ -39,21 +40,22 @@ export function useOps() {
 
   const reload = useCallback(async () => {
     const safe = <T,>(p: Promise<T>, d: T) => p.catch((e: Error) => { setError(e.message); return d; });
-    const [overview, tenants, invites, models, prices, scenes, finance, alerts, audit] = await Promise.all([
+    const [overview, tenants, invites, models, prices, scenes, finance, alerts, audit, suppliers] = await Promise.all([
       safe(get("/platform/ops/overview"), {}),
-      safe(get("/platform/ops/tenants?size=200"), { items: [] }),
+      safe(get("/platform/ops/tenants?size=100"), { items: [] }),
       safe(get("/platform/ops/invites?size=100"), { items: [] }),
       safe(get("/platform/ops/models"), []),
-      safe(get("/platform/ops/prices?size=200"), { items: [] }),
+      safe(get("/platform/ops/prices?size=100"), { items: [] }),
       safe(get("/platform/ops/scenes"), []),
       safe(get("/platform/ops/finance"), { orders: [], refunds: [], diffs: [] }),
       safe(get("/platform/ops/alerts?size=100"), { items: [] }),
       safe(get("/platform/ops/audit?size=100"), { items: [] }),
+      safe(get("/platform/ops/suppliers"), []),
     ]);
     setRaw({
       overview: overview || {}, tenants: tenants?.items || [], invites: invites?.items || [], models: models || [],
       prices: prices?.items || [], scenes: scenes || [], finance: { orders: finance?.orders || [], refunds: finance?.refunds || [], diffs: finance?.diffs || [] },
-      alerts: alerts?.items || [], audit: audit?.items || [],
+      alerts: alerts?.items || [], audit: audit?.items || [], suppliers: suppliers || [],
     });
     setLoading(false);
   }, []);

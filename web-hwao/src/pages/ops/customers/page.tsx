@@ -1,4 +1,6 @@
-import { useState } from "react";
+// 运营端 · 客户管理：企业列表（搜索/筛选/分页）、详情、编辑预算与并发、启停、额度发放、邀请码生成与作废。
+import { useCallback, useState } from "react";
+import { FilterSelect, Pager, RowBtn, Toolbar, useConfirm, useTable, f2y, y2f } from "@/components/ops/kit";
 import { Badge, Button, Card, Drawer, Field, Input, Modal, Notice, PageHeader, Textarea } from "@/components/base/ui";
 import { useOps } from "@/lib/ops-data";
 import { ts2str } from "@/lib/api";
@@ -16,6 +18,23 @@ export default function OpsCustomersPage() {
   const [inviteDays, setInviteDays] = useState("30");
   void status;
   void setStatus;
+  const confirm = useConfirm();
+  const [stFilter, setStFilter] = useState("");
+  const cFilter = useCallback((c: any) => !stFilter || c.status === stFilter, [stFilter]);
+  const cText = useCallback((c: any) => `${c.name} ${c.id}`, []);
+  const t = useTable(opsCustomers, cText, 10, cFilter);
+  // 编辑企业：名称、日/月预算（元）、并发上限、预警阈值
+  const [edit, setEdit] = useState<any | null>(null);
+  const [editErr, setEditErr] = useState("");
+  const saveEdit = async () => {
+    if (!edit.name.trim()) return setEditErr("企业名称必填");
+    if ([edit.daily, edit.monthly, edit.max_concurrency].some((x: any) => Number(x) < 0 || Number.isNaN(Number(x)))) return setEditErr("预算与并发不能为负");
+    if (Number(edit.daily) > 0 && Number(edit.monthly) > 0 && Number(edit.daily) > Number(edit.monthly)) return setEditErr("日预算不能大于月预算");
+    if (edit.alert_thresholds && !/^\d+(,\d+)*$/.test(edit.alert_thresholds)) return setEditErr("预警阈值格式如 50,80,100");
+    const r = await act("PUT", `/tenants/${edit.id}`, { name: edit.name, daily_budget: y2f(edit.daily), monthly_budget: y2f(edit.monthly), max_concurrency: Number(edit.max_concurrency) || 0, alert_thresholds: edit.alert_thresholds }, "企业信息已更新");
+    if (r !== undefined) setEdit(null);
+  };
+  const openEdit = (c: any) => { setEditErr(""); setEdit({ id: c.id, name: c.raw.name, daily: f2y(c.raw.daily_budget), monthly: f2y(c.raw.monthly_budget), max_concurrency: c.raw.max_concurrency || 0, alert_thresholds: c.raw.alert_thresholds || "" }); };
 
   const customer = opsCustomers.find((c) => c.id === selected);
   // 状态以服务端为准
@@ -41,6 +60,8 @@ export default function OpsCustomersPage() {
       {notice ? <Notice tone="primary" icon="ri-information-line" className="mb-3">{notice}</Notice> : null}
 
       <Card className="overflow-hidden">
+        <Toolbar q={t.q} setQ={t.setQ} placeholder="搜索企业名称或编号"
+          filters={<FilterSelect label="状态" value={stFilter} onChange={setStFilter} options={Array.from(new Set(opsCustomers.map((c) => c.status))).map((x) => [x, x])} />} />
         <div className="hidden grid-cols-[1.2fr_0.8fr_1fr_0.8fr_1fr_0.8fr_0.9fr] gap-3 border-b border-background-200 bg-background-100/50 px-4 py-2 text-[10px] text-foreground-500 md:grid">
           <span>企业</span>
           <span>开通状态</span>
@@ -51,7 +72,7 @@ export default function OpsCustomersPage() {
           <span className="text-right">操作</span>
         </div>
         <div className="divide-y divide-background-100">
-          {opsCustomers.map((customer) => {
+          {t.paged.map((customer) => {
             const state = currentStatus(customer.id, customer.status);
             return (
               <div key={customer.id} className="grid grid-cols-1 gap-1.5 px-4 py-3 text-[10.5px] md:grid-cols-[1.2fr_0.8fr_1fr_0.8fr_1fr_0.8fr_0.9fr] md:items-center md:gap-3">
@@ -70,6 +91,7 @@ export default function OpsCustomersPage() {
                   <button type="button" onClick={() => { setSelected(customer.id); setNotice(""); }} className="cursor-pointer rounded-md border border-background-300 px-2 py-1 text-[9.5px] text-foreground-700 hover:border-primary-300 hover:text-primary-700">
                     详情
                   </button>
+                  <RowBtn onClick={() => openEdit(customer)}>编辑</RowBtn>
                   {state === "开通中" || state === "开通失败" ? (
                     <button
                       type="button"
@@ -84,6 +106,7 @@ export default function OpsCustomersPage() {
             );
           })}
         </div>
+        <Pager page={t.page} pages={t.pages} total={t.total} setPage={t.setPage} />
       </Card>
 
       <Drawer
@@ -95,6 +118,7 @@ export default function OpsCustomersPage() {
         footer={
           customer ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button size="sm" variant="outline" onClick={() => openEdit(customer)}>编辑</Button>
               <Button size="sm" variant="outline" onClick={() => setQuotaOpen(true)}>发放额度</Button>
               {currentStatus(customer.id, customer.status) === "已暂停" ? (
                 <Button size="sm" onClick={() => tenantAction(customer.id, "enable", `${customer.name} 已恢复新请求。`)}>
@@ -214,15 +238,37 @@ export default function OpsCustomersPage() {
         <Field label="有效天数">
           <Input type="number" value={inviteDays} onChange={(e) => setInviteDays(e.target.value)} />
         </Field>
-        <div className="mt-2 space-y-1">
-          {raw.invites.slice(0, 8).map((i: any) => (
+        <p className="mt-3 text-[10.5px] font-medium text-foreground-500">最近邀请码</p>
+        <div className="mt-1 max-h-60 space-y-1 overflow-y-auto">
+          {raw.invites.slice(0, 20).map((i: any) => (
             <div key={i.id} className="flex justify-between text-[10px] text-foreground-600">
               <span className="font-mono-ui">{i.code}</span>
-              <span>{i.used_by ? `已使用 · 企业 #${i.tenant_id}` : `未使用 · ${ts2str(i.expires_at).slice(0, 10)} 到期`}</span>
+              <span className="flex items-center gap-2">{i.used_by ? `已使用 · 企业 #${i.tenant_id}` : `未使用 · ${ts2str(i.expires_at).slice(0, 10)} 到期`}
+                {!i.used_by ? <RowBtn danger onClick={() => confirm.ask({ title: `作废邀请码 ${i.code}？`, body: "作废后该邀请码无法再用于开通。", danger: true, confirmText: "作废", run: () => void act("DELETE", `/invites/${i.id}`, undefined, "邀请码已作废") })}>作废</RowBtn> : null}
+              </span>
             </div>
           ))}
         </div>
       </Modal>
+      <Modal
+        open={Boolean(edit)}
+        onClose={() => setEdit(null)}
+        title="编辑企业"
+        description="预算为 0 表示不限；修改写入审计记录。余额只能通过额度发放或充值变更。"
+        footer={<><Button variant="outline" onClick={() => setEdit(null)}>取消</Button><Button onClick={() => void saveEdit()}>保存</Button></>}
+      >
+        {edit ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="企业名称 *" className="sm:col-span-2"><Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></Field>
+            <Field label="日预算（元）"><Input type="number" value={edit.daily} onChange={(e) => setEdit({ ...edit, daily: e.target.value })} /></Field>
+            <Field label="月预算（元）"><Input type="number" value={edit.monthly} onChange={(e) => setEdit({ ...edit, monthly: e.target.value })} /></Field>
+            <Field label="并发上限" hint="0 为不限"><Input type="number" value={edit.max_concurrency} onChange={(e) => setEdit({ ...edit, max_concurrency: e.target.value })} /></Field>
+            <Field label="预算预警阈值（%）" hint="如 50,80,100"><Input value={edit.alert_thresholds} onChange={(e) => setEdit({ ...edit, alert_thresholds: e.target.value })} /></Field>
+            {editErr ? <p className="text-[11px] text-danger sm:col-span-2">{editErr}</p> : null}
+          </div>
+        ) : null}
+      </Modal>
+      {confirm.node}
     </div>
   );
 }
