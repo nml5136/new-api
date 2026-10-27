@@ -37,7 +37,7 @@ func projectModelLimits(p *hmodel.Project) string {
 	DB().Model(&hmodel.CatalogModel{}).Where("status = ?", hmodel.ModelOnSale).Pluck("model_name", &names)
 	var out []string
 	for _, n := range names {
-		if InList(p.ModelWhitelist, n) {
+		if p.ModelWhitelist == "" || InList(p.ModelWhitelist, n) {
 			out = append(out, n)
 		}
 	}
@@ -245,4 +245,20 @@ func AuthKey(raw, clientIp string) (*hmodel.PlatformKey, error) {
 		return nil, ErrQuota("密钥调用额度已用尽")
 	}
 	return &k, nil
+}
+
+// WorkbenchKeyName 网页工作台专用的项目级服务密钥名（不对外展示完整密钥）。
+const WorkbenchKeyName = "__workbench__"
+
+// WorkbenchKey 取得（或创建）项目的网页工作台服务密钥，使网页调用与 API 调用走同一计费链路。
+func WorkbenchKey(t *hmodel.Tenant, p *hmodel.Project) (*hmodel.PlatformKey, error) {
+	var k hmodel.PlatformKey
+	if DB().Where("project_id = ? AND name = ? AND owner_user_id = 0 AND status = ?", p.Id, WorkbenchKeyName, hmodel.KeyStatusActive).First(&k).Error == nil {
+		return &k, nil
+	}
+	ck, err := createKeyForProject(0, t, p, CreateKeyReq{ProjectId: p.Id, Name: WorkbenchKeyName, Service: true})
+	if err != nil {
+		return nil, err
+	}
+	return ck.Info, nil
 }
