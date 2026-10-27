@@ -36,6 +36,10 @@ const statusNote: Record<string, string> = {
 };
 const yuan = (f?: number) => (f ? `¥${fen2yuan(f).toFixed(2)}` : "不足 ¥0.01");
 
+// 标题展示：去除 Markdown 语法（兼容历史标题）
+const plainTitle = (s: string) =>
+  s.replace(/```[\s\S]*?(```|$)/g, " ").replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*_`~>#]+/g, "").replace(/\s+/g, " ").trim() || "新对话";
+
 function relTime(t: number) {
   const d = Date.now() / 1000 - t;
   if (d < 60) return "刚刚";
@@ -251,7 +255,7 @@ export default function ChatPage() {
     t.style.height = "auto"; t.style.height = `${Math.min(t.scrollHeight, 220)}px`;
   }, [input]);
 
-  const filtered = useMemo(() => convs.filter((c) => !q || c.title.includes(q)), [convs, q]);
+  const filtered = useMemo(() => convs.filter((c) => !q || plainTitle(c.title).includes(q)), [convs, q]);
   const lastAssistant = msgs[msgs.length - 1]?.role === "assistant" ? msgs[msgs.length - 1] : null;
   const modelLabel = (m: string) => m === "auto" ? "自动选择" : m.startsWith("scene:") ? `场景 · ${scenes.find((s) => `scene:${s.id}` === m)?.name || m.slice(6)}` : models.find((x) => x.id === m)?.name || m;
 
@@ -274,7 +278,7 @@ export default function ChatPage() {
             className={cx("group mb-0.5 flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 transition-colors", cur?.conv_id === c.conv_id ? "bg-primary-50 text-primary-800" : "hover:bg-background-100")}>
             <i className={cx("ri-chat-3-line text-sm", cur?.conv_id === c.conv_id ? "text-primary-600" : "text-foreground-400")} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium">{c.title}</div>
+              <div className="truncate text-[13px] font-medium">{plainTitle(c.title)}</div>
               <div className="truncate text-[11px] text-foreground-500">{modelLabel(c.model)} · {relTime(c.updated_at)}</div>
             </div>
             <div className="hidden shrink-0 items-center group-hover:flex">
@@ -300,7 +304,7 @@ export default function ChatPage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-background-200 bg-background-50/90 px-4 py-2.5 backdrop-blur md:px-6">
           <button type="button" className="rounded-lg p-1.5 text-foreground-600 hover:bg-background-100 lg:hidden" onClick={() => setMobileList(true)}><i className="ri-chat-history-line text-lg" /></button>
           <div className="mr-auto min-w-0">
-            <div className="truncate font-heading text-[15px] font-semibold text-foreground-900">{cur?.title || "新对话"}</div>
+            <div className="truncate font-heading text-[15px] font-semibold text-foreground-900">{cur ? plainTitle(cur.title) : "新对话"}</div>
             <div className="truncate text-[11px] text-foreground-500">{projName ? `项目：${projName}` : "未选择项目"}{cur?.session_id ? ` · 会话 ${cur.session_id.slice(-8)}` : ""}</div>
           </div>
           <Select aria-label="路由模式" value={mode} onChange={(e) => changeRoute(model, e.target.value)} disabled={busy} className="!h-9 !w-[7.5rem] text-[13px]" title={MODES.find((m) => m.v === mode)?.hint}>

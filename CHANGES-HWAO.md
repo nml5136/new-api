@@ -38,3 +38,4 @@
 - web-hwao：新增 pages/app/chat（Markdown + 代码高亮、SSE 流式、停止/重新生成提示计费、模型/路由模式选择、每条回复的实际模型/Token/费用/兜底说明、响应式）；导航“工作”组首项“对话”、侧栏按钮改为“新对话”；工作台结果新增“继续对话”。新增依赖 react-markdown、remark-gfm、rehype-highlight、highlight.js（不渲染原始 HTML）。
 - 测试桩：runtime/mock_upstream.py（仓库外）已支持 stream，仅用于联调，可删除并把渠道 1 指回真实上游。
 - 未改动 New API 上游文件。
+- 2026-10-27：对话标题去除 Markdown 语法（hwao/hapi/chat.go plainTitle；前端展示兼容历史标题）。

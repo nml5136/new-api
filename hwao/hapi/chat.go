@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -369,7 +370,7 @@ func sendChat(c *gin.Context) {
 		hservice.DB().Create(&um)
 		hist = append(hist, um)
 		if cv.Title == "新对话" {
-			hservice.DB().Model(cv).Update("title", cut(strings.ReplaceAll(txt, "\n", " "), 30))
+			hservice.DB().Model(cv).Update("title", cut(plainTitle(txt), 30))
 		}
 	}
 	// 组装多轮上下文：失败的回复不进入上下文
@@ -481,6 +482,25 @@ func cut(s string, n int) string {
 	r := []rune(s)
 	if len(r) > n {
 		return string(r[:n])
+	}
+	return s
+}
+
+var (
+	mdFence  = regexp.MustCompile("(?s)```.*?(```|$)")
+	mdLink   = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
+	mdSyntax = regexp.MustCompile("[*_`~>#]+|^\\s*([-+]|\\d+\\.)\\s+")
+	mdSpace  = regexp.MustCompile(`\s+`)
+)
+
+// plainTitle 由首条消息生成标题：去除 Markdown 语法与多余空白。
+func plainTitle(s string) string {
+	s = mdFence.ReplaceAllString(s, " ")
+	s = mdLink.ReplaceAllString(s, "$1")
+	s = mdSyntax.ReplaceAllString(s, "")
+	s = strings.TrimSpace(mdSpace.ReplaceAllString(s, " "))
+	if s == "" {
+		return "新对话"
 	}
 	return s
 }
