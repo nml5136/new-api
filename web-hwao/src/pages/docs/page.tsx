@@ -125,7 +125,7 @@ export default function DocsPage() {
                 平台不接受上游厂商密钥，也不要求你填写任何 New API 管理员凭证。
               </p>
               <Notice className="mt-3" tone="warning" icon="ri-shield-keyhole-line">
-                不要把密钥写入前端代码或浏览器存储。演示密钥以 demo_hr_ 开头，无法用于真实调用。
+                不要把密钥写入前端代码或浏览器存储。密钥只在创建时显示一次，请妥善保存。
               </Notice>
             </section>
 
@@ -250,7 +250,7 @@ export default function DocsPage() {
             <div className="mt-4 rounded-xl border border-background-200 bg-background-50 p-4">
               <p className="text-xs font-medium text-foreground-900">需要完整的调用闭环？</p>
               <p className="mt-1 text-[11px] leading-relaxed text-foreground-600">
-                进入演示工作台创建项目与密钥，可直接体验接入示例的复制与停用流程。
+                进入工作台创建项目与密钥，即可按示例接入。
               </p>
               <Link
                 to="/app/keys"

@@ -418,7 +418,7 @@ export default function RoutingDemo() {
           <i className="ri-loop-right-line" />
           {retryMode ? "返回主流程" : "查看通道重试"}
         </button>
-        <p className="text-[9px] text-background-50/30">产品流程演示 · 不调用真实服务</p>
+        <p className="text-[9px] text-background-50/30">产品流程示意</p>
       </div>
 
       <div className="mt-2 h-0.5 w-full overflow-hidden rounded-full bg-background-50/10">

@@ -77,10 +77,10 @@ export default function OpsResourcesPage() {
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              ["锁定版本", "待联调确认"],
-              ["上次同步", "09:20"],
-              ["同步延迟", "约 40s"],
-              ["待处理差异", "2 项"],
+              ["模型数", `${opsModels.length} 个`],
+              ["上次同步", opsSyncLogs[0]?.time || "—"],
+              ["渠道总数", `${opsModels.reduce((n: number, m: any) => n + (m.channels || 0), 0)} 条`],
+              ["无渠道模型", `${opsModels.filter((m: any) => !m.channels).length} 个`],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg bg-background-100/60 p-2.5">
                 <p className="text-[9.5px] text-foreground-500">{label}</p>
@@ -100,19 +100,19 @@ export default function OpsResourcesPage() {
           <div className="mt-2 space-y-2">
             <div className="flex items-center justify-between rounded-lg bg-background-100/60 px-3 py-2">
               <span className="text-[10.5px] text-foreground-600">可售模型</span>
-              <span className="text-[11px] font-medium text-foreground-900">3 个（另有 1 个待验证）</span>
+              <span className="text-[11px] font-medium text-foreground-900">{opsModels.filter((m: any) => m.status === "on_sale").length} 个（另有 {opsModels.filter((m: any) => m.status === "pending" || m.status === "testing").length} 个待验证）</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-warning-soft/60 px-3 py-2">
               <span className="text-[10.5px] text-foreground-600">异常上游通道</span>
-              <span className="text-[11px] font-medium text-warning">2 条</span>
+              <span className="text-[11px] font-medium text-warning">{opsModels.filter((m: any) => m.status === "on_sale" && !m.channels).length} 个在售模型无渠道</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-warning-soft/60 px-3 py-2">
               <span className="text-[10.5px] text-foreground-600">授权到期提醒</span>
-              <span className="text-[11px] font-medium text-warning">C-1 授权 7 天后到期</span>
+              <span className="text-[11px] font-medium text-warning">{opsChannels.filter((c) => c.status === "授权到期").map((c) => c.name).join("、") || "无"}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-background-100/60 px-3 py-2">
               <span className="text-[10.5px] text-foreground-600">价格待确认</span>
-              <span className="text-[11px] font-medium text-foreground-900">1 个（示例模型 E）</span>
+              <span className="text-[11px] font-medium text-foreground-900">{opsModels.filter((m: any) => !m.price).length} 个</span>
             </div>
           </div>
         </Card>

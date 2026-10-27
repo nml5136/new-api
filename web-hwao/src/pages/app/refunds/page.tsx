@@ -6,15 +6,15 @@ import { cx, money } from "@/lib/format";
 const stepLabels = ["待审核", "额度锁定", "退款中", "完成"];
 
 export default function RefundsPage() {
-  const { records, orders, balance, refunds, createRefund, advanceRefund } = useDemo();
+  const { records, orders, balance, refunds, createRefund, advanceRefund, me } = useDemo();
   const [tab, setTab] = useState<"refund" | "invoice">("refund");
   const [type, setType] = useState<"unused" | "verify">("verify");
   const [recordId, setRecordId] = useState(records[0]?.id ?? "");
-  const [amount, setAmount] = useState("0.06");
+  const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("中断前输出不完整");
   const [note, setNote] = useState("");
   const [notice, setNotice] = useState("");
-  const [invoice, setInvoice] = useState({ title: "星澜科技（上海）有限公司", tax: "", email: "finance@xinglan.cn" });
+  const [invoice, setInvoice] = useState({ title: me?.tenant?.name || "", tax: "", email: "" });
   const [invoiceDocs, setInvoiceDocs] = useState<string[]>([]);
   const [invoiceDone, setInvoiceDone] = useState(false);
 

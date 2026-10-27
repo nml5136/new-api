@@ -350,8 +350,7 @@ export default function RequestsPage() {
 
                   <div className="mt-3 space-y-1.5 rounded-lg bg-background-100/70 p-3 text-[10.5px] leading-relaxed text-foreground-600">
                     <p><span className="text-foreground-900">选择理由：</span>能力符合、质量检查通过、预估费用在单次上限与剩余预算内。</p>
-                    <p><span className="text-foreground-900">排除原因：</span>示例模型 B 质量分低于场景底线；示例模型 E 当前企业授权未覆盖。</p>
-                    <p><span className="text-foreground-900">模型是否变化：</span>未发生变化。渠道重试不等于模型升级。</p>
+                                        <p><span className="text-foreground-900">模型是否变化：</span>未发生变化。渠道重试不等于模型升级。</p>
                     <p className="text-foreground-400">查看任务正文需要相应权限，访问会被记录。</p>
                   </div>
                 </div>
@@ -374,10 +373,6 @@ export default function RequestsPage() {
                       <div className="flex justify-between text-foreground-600">
                         <span>输出 {tokens(focused.tokensOut)} Token × {money(costDetail(focused).priceOut)} / 百万</span>
                         <span className="tnum">{money(costDetail(focused).outputCost, 4)}</span>
-                      </div>
-                      <div className="flex justify-between text-foreground-500">
-                        <span>缓存项</span>
-                        <span className="tnum">¥0.0000</span>
                       </div>
                       <div className="flex justify-between border-t border-background-100 pt-1.5 font-medium text-foreground-900">
                         <span>计费状态</span>

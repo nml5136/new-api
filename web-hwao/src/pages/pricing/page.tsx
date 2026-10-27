@@ -60,7 +60,7 @@ export default function PricingPage() {
             <div className="rounded-2xl border border-background-50/12 bg-background-900/60 p-5 backdrop-blur">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-xs font-medium text-background-50/80">用量估算器</p>
-                <span className="rounded-full bg-background-50/10 px-2 py-0.5 text-[10px] text-background-50/50">演示估算</span>
+                <span className="rounded-full bg-background-50/10 px-2 py-0.5 text-[10px] text-background-50/50">估算</span>
               </div>
               <div className="space-y-4">
                 <div>
@@ -121,7 +121,7 @@ export default function PricingPage() {
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="font-heading text-xl font-semibold text-foreground-950 md:text-2xl">模型价格表</h2>
-            <p className="mt-1.5 text-xs text-foreground-600">价格为演示数值，实际费用按实际用量结算。</p>
+            <p className="mt-1.5 text-xs text-foreground-600">价格为参考估算，实际费用按实际用量结算。</p>
           </div>
           <div className="inline-flex flex-wrap items-center gap-1 self-start rounded-full bg-background-100 p-1">
             {filters.map((f) => (
@@ -182,7 +182,7 @@ export default function PricingPage() {
           <div className="rounded-xl border border-background-200 bg-background-50 p-5">
             <h3 className="text-sm font-semibold text-foreground-950">预估与最终用量</h3>
             <p className="mt-2 text-xs leading-relaxed text-foreground-600">
-              任务开始前展示预估费用与硬上限，最终按实际输入输出结算。估算器数值为演示，不构成报价。
+              任务开始前展示预估费用与硬上限，最终按实际输入输出结算。估算器数值仅供参考，不构成报价。
             </p>
           </div>
           <div className="rounded-xl border border-background-200 bg-background-50 p-5">
@@ -226,7 +226,7 @@ export default function PricingPage() {
         </div>
 
         <Notice className="mt-6" tone="warning" icon="ri-flask-line">
-          本页所有价格、用量与费用均为演示数据。原型不与任何真实支付渠道或模型服务交互。
+          本页价格与费用为参考示意，以登录后“模型”页的实时价格为准。
         </Notice>
       </section>
     </PublicLayout>

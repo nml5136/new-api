@@ -71,7 +71,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-background-50/40">
-              <span className="flex items-center gap-1.5"><i className="ri-flask-line" />演示环境，不调用真实模型</span>
+              <span className="flex items-center gap-1.5"><i className="ri-shield-check-line" />按量计费 · 预算可控</span>
               <span className="flex items-center gap-1.5"><i className="ri-lock-2-line" />企业统一钱包</span>
               <span className="flex items-center gap-1.5"><i className="ri-shield-check-line" />一期三个场景</span>
             </div>
@@ -272,14 +272,14 @@ export default function Home() {
         <div className="relative mx-auto w-full max-w-[760px] px-4 text-center md:px-8">
           <h2 className="font-heading text-2xl font-semibold text-foreground-950 md:text-[34px]">从你的第一个场景开始</h2>
           <p className="mx-auto mt-3 max-w-[460px] text-sm leading-relaxed text-foreground-600">
-            用演示账号进入工作台，完成一次电商文案任务，然后在账单里看到同一笔费用。
+            注册并使用邀请码开通企业空间，完成一次电商文案任务，然后在账单里看到同一笔费用。
           </p>
           <div className="mt-7 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
             <Link
-              to="/login"
+              to="/sign-up"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 text-sm font-medium text-background-50 transition-colors hover:bg-primary-600 whitespace-nowrap"
             >
-              使用演示账号进入
+              注册开通
               <i className="ri-arrow-right-line" />
             </Link>
             <Link

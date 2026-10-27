@@ -14,7 +14,13 @@ const sceneIcons: Record<string, string> = {
 
 export default function OverviewPage() {
   const navigate = useNavigate();
-  const { monthSpend, monthBudget, reserved, balance, records, tasks, projects, currentProjectId, singleCap, saveDraft, scenes } = useDemo();
+  const { monthSpend, monthBudget, reserved, balance, records, tasks, projects, currentProjectId, singleCap, saveDraft, scenes, user, models } = useDemo();
+  // 问候语按当前时段实时计算，称呼取登录用户的显示名称或用户名
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h < 6 ? "夜深了" : h < 12 ? "上午好" : h < 14 ? "中午好" : h < 18 ? "下午好" : "晚上好";
+  const who = user?.display_name || user?.username || "";
+  const today = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日`;
   const [scene, setScene] = useState("commerce-copy");
   const [prompt, setPrompt] = useState("");
   const [range, setRange] = useState<"7" | "30">("7");
@@ -45,8 +51,8 @@ export default function OverviewPage() {
     <div>
       <PageHeader
         eyebrow="总览"
-        title="上午好，林晨"
-        description={`2026 年 10 月 26 日 · 当前项目：${currentProject?.name ?? "默认项目"} · 今天可以从一个具体任务开始。`}
+        title={who ? `${greet}，${who}` : greet}
+        description={`${today} · 当前项目：${currentProject?.name ?? "默认项目"} · 今天可以从一个具体任务开始。`}
         actions={
           <>
             <Link
@@ -256,13 +262,12 @@ export default function OverviewPage() {
 
       <div className="mt-4 flex flex-col gap-3 rounded-xl border border-background-200 bg-background-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-foreground-600">
-          <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-success" />可用模型 3 个</span>
+          <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-success" />可用模型 {models.filter((m) => m.status === "available").length} 个</span>
           <span className="flex items-center gap-1.5"><i className="ri-time-line text-foreground-400" />最近成功请求 {records.find((r) => r.status === "completed")?.time ?? "—"}</span>
-          <span className="flex items-center gap-1.5"><i className="ri-error-warning-line text-warning" />需要处理的账单问题 1 条</span>
+          <span className="flex items-center gap-1.5"><i className="ri-error-warning-line text-warning" />需要处理的调用 {records.filter((r) => r.status === "unknown" || r.status === "interrupted").length} 条</span>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-foreground-400">
           <span>健康状态仅表示当前可知状态</span>
-          <span className="rounded bg-background-100 px-1.5 py-0.5">示例</span>
         </div>
       </div>
 

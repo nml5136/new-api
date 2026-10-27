@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Logo from "@/components/feature/Logo";
-import DemoController from "@/components/feature/DemoController";
 import { useDemo } from "@/lib/demo-store";
 import { cx, money } from "@/lib/format";
 
@@ -46,7 +45,16 @@ const searchTargets = [
 export default function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { balance, monthSpend, monthBudget, projects, currentProjectId, setCurrentProject, records, user, me } = useDemo();
+  const { balance, monthSpend, monthBudget, projects, currentProjectId, setCurrentProject, records, user, me, refunds } = useDemo();
+  // 通知中心：由真实调用记录、预算与退款数据计算，无事项时显示空状态
+  const pendingRecs = records.filter((r) => r.status === "unknown" || r.status === "interrupted");
+  const budgetPct = monthBudget ? Math.round((monthSpend / monthBudget) * 100) : 0;
+  const openRefunds = refunds.filter((r) => r.status !== "done");
+  const notices = [
+    pendingRecs.length ? { to: "/app/requests", title: `${pendingRecs.length} 条调用结果待确认`, sub: pendingRecs[0].id } : null,
+    monthBudget && budgetPct >= 70 ? { to: "/app/budgets", title: `本月预算使用 ${budgetPct}%`, sub: `剩余 ${money(monthBudget - monthSpend)}` } : null,
+    openRefunds.length ? { to: "/app/refunds", title: `${openRefunds.length} 笔退款处理中`, sub: openRefunds[0].id } : null,
+  ].filter(Boolean) as { to: string; title: string; sub: string }[];
   const uname = user?.display_name || user?.username || "未登录";
   const roleLabel = ({ tenant_admin: "企业管理员", tenant_member: "使用成员", tenant_finance: "财务成员" } as Record<string, string>)[me?.role || ""] || "成员";
   const [collapsed, setCollapsed] = useState(false);
@@ -243,7 +251,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </button>
 
             <div className="ml-auto flex items-center gap-1.5 md:ml-0">
-              <DemoController />
               <div ref={noticeRef} className="relative">
                 <button
                   type="button"
@@ -252,24 +259,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-foreground-600 hover:bg-background-100"
                 >
                   <i className="ri-notification-3-line text-base" />
-                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-warning" />
+                  {notices.length ? <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-warning" /> : null}
                 </button>
                 {noticeOpen ? (
                   <div className="absolute right-0 z-50 mt-2 w-[300px] overflow-hidden rounded-xl border border-background-200 bg-background-50 shadow-lift">
                     <p className="border-b border-background-100 px-3.5 py-2.5 text-xs font-medium text-foreground-900">需要处理</p>
                     <div className="divide-y divide-background-100">
-                      <Link to="/app/requests" className="block px-3.5 py-2.5 hover:bg-background-100">
-                        <p className="text-xs text-foreground-900">1 条调用结果待确认</p>
-                        <p className="mt-0.5 text-[11px] text-foreground-500">req_20261024_1050 · 费用待核对</p>
-                      </Link>
-                      <Link to="/app/budgets" className="block px-3.5 py-2.5 hover:bg-background-100">
-                        <p className="text-xs text-foreground-900">本月预算使用 54%</p>
-                        <p className="mt-0.5 text-[11px] text-foreground-500">剩余 {money(monthBudget - monthSpend)}</p>
-                      </Link>
-                      <Link to="/app/refunds" className="block px-3.5 py-2.5 hover:bg-background-100">
-                        <p className="text-xs text-foreground-900">费用核验已完成 1 笔</p>
-                        <p className="mt-0.5 text-[11px] text-foreground-500">已追加补偿记录 ¥0.06</p>
-                      </Link>
+                      {notices.length === 0 ? <p className="px-3.5 py-4 text-[11px] text-foreground-400">暂无待处理事项</p> : null}
+                      {notices.map((n) => (
+                        <Link key={n.to} to={n.to} className="block px-3.5 py-2.5 hover:bg-background-100">
+                          <p className="text-xs text-foreground-900">{n.title}</p>
+                          <p className="mt-0.5 text-[11px] text-foreground-500">{n.sub}</p>
+                        </Link>
+                      ))}
                     </div>
                   </div>
                 ) : null}

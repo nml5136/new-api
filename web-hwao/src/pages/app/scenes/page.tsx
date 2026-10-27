@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge, Button, Card, PageHeader } from "@/components/base/ui";
 import { useDemo } from "@/lib/demo-store";
 import { commerceOutput, extractJson, extractRows, summaryOutput } from "@/mocks/outputs";
-import { cx } from "@/lib/format";
+import { cx, money } from "@/lib/format";
 
 const icons: Record<string, string> = {
   "commerce-copy": "ri-quill-pen-line",
@@ -12,7 +12,7 @@ const icons: Record<string, string> = {
 };
 
 export default function ScenesPage() {
-  const { scenes } = useDemo();
+  const { scenes, singleCap } = useDemo();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState("commerce-copy");
@@ -184,7 +184,7 @@ export default function ScenesPage() {
 
           <div className="flex flex-col gap-2 border-t border-background-200 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[10.5px] text-foreground-500">
-              推荐偏好：{current.recommend === "quality" ? "质量优先" : "均衡"} · 默认单次上限 ¥0.10 · 同模型多渠道兜底已启用
+              推荐偏好：{current.recommend === "quality" ? "质量优先" : "均衡"} · 单次上限 {money(singleCap)} · 同模型多渠道兜底已启用
             </p>
             <Button variant="outline" size="sm" onClick={() => navigate(`/app/workspace?scene=${current.id}`)}>
               打开任务工作区

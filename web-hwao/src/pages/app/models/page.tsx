@@ -245,7 +245,7 @@ export default function ModelsPage() {
               <div className="space-y-1.5 text-[10.5px] text-foreground-700">
                 <div className="flex justify-between"><span>输入</span><span className="tnum">{money(detail.priceIn)} / 百万 Token</span></div>
                 <div className="flex justify-between"><span>输出</span><span className="tnum">{money(detail.priceOut)} / 百万 Token</span></div>
-                <div className="flex justify-between text-foreground-500"><span>更新时间</span><span>2026-10-01</span></div>
+                
               </div>
             </div>
 

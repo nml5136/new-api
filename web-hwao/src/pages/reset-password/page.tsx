@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
           </span>
           <h1 className="mt-4 font-heading text-xl font-semibold text-background-50">重置登录密码</h1>
           <p className="mt-1.5 text-xs leading-relaxed text-background-50/55">
-            输入企业邮箱，我们会发送重置说明。演示环境不会发送真实邮件。
+            输入绑定的邮箱，我们会发送重置说明。
           </p>
 
           {sent ? (

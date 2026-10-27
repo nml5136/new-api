@@ -171,14 +171,16 @@ export default function OpsEvaluationsPage() {
                 </div>
               </div>
               <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-[120px] shrink-0 text-[9.5px] text-foreground-500">A 达标率 92.5%</span>
-                  <ProgressBar value={92.5} tone="success" />
-                </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="w-[120px] shrink-0 text-[9.5px] text-foreground-500">B 达标率 79.4%</span>
-                  <ProgressBar value={79.4} tone="warning" />
-                </div>
+                {/* 达标率进度条：取真实评测记录 */}
+                {opsEvalRows.slice(0, 4).map((row) => {
+                  const v = parseFloat(String(row.pass)) || 0;
+                  return (
+                    <div key={row.model} className="mt-1 flex items-center gap-2">
+                      <span className="w-[120px] shrink-0 truncate text-[9.5px] text-foreground-500">{row.model} 达标率 {row.pass}</span>
+                      <ProgressBar value={v} tone={row.verdict === "满足门槛" ? "success" : "warning"} />
+                    </div>
+                  );
+                })}
                 <p className="mt-2 text-[9px] text-foreground-400">低于场景质量门槛的候选不满足发布条件，价格再低也不会进入发布。</p>
               </div>
             </div>

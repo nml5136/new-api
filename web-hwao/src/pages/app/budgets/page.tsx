@@ -5,13 +5,13 @@ import { useDemo } from "@/lib/demo-store";
 import { cx, money } from "@/lib/format";
 
 export default function BudgetsPage() {
-  const { monthBudget, monthSpend, reserved, balance, singleCap, projects, updateBudget, updateProject } = useDemo();
+  const { monthBudget, monthSpend, reserved, balance, singleCap, projects, updateBudget, updateProject, members } = useDemo();
   const [enterpriseOpen, setEnterpriseOpen] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [formBudget, setFormBudget] = useState(String(monthBudget));
   const [formCap, setFormCap] = useState(String(singleCap));
   const [warn, setWarn] = useState("80");
-  const [receiver, setReceiver] = useState("企业管理员 · 林晨");
+  const [receiver, setReceiver] = useState("全部管理员");
   const [projectBudget, setProjectBudget] = useState("");
   const [saved, setSaved] = useState("");
 
@@ -200,8 +200,9 @@ export default function BudgetsPage() {
           </Field>
           <Field label="通知接收人">
             <Select value={receiver} onChange={(e) => setReceiver(e.target.value)}>
-              <option>企业管理员 · 林晨</option>
-              <option>财务成员 · 何雨</option>
+              {members.filter((m) => m.role !== "使用成员").map((m) => (
+                <option key={m.id}>{m.role} · {m.name}</option>
+              ))}
               <option>全部管理员</option>
             </Select>
           </Field>
