@@ -217,7 +217,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </button>
 
             <div className="hidden min-w-0 items-center gap-2 md:flex">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary-100 text-[11px] font-semibold text-foreground-700">星</span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary-100 text-[11px] font-semibold text-foreground-700">{/* 企业名首字 */}{(me?.tenant?.name || "企").slice(0, 1)}</span>
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-[13px] font-medium text-foreground-900">{me?.tenant?.name || "未开通企业"}</p>
                 <p className="text-[10px] text-foreground-500">{roleLabel} · {uname}</p>
@@ -283,7 +283,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   onClick={() => setMenuOpen((v) => !v)}
                   className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-secondary-800 text-[11px] font-medium text-background-50"
                 >
-                  林
+                  {/* 当前用户显示名首字 */}
+                  {(user?.display_name || user?.username || "我").slice(0, 1)}
                 </button>
                 {menuOpen ? (
                   <div className="absolute right-0 z-50 mt-2 w-[210px] overflow-hidden rounded-xl border border-background-200 bg-background-50 shadow-lift">
