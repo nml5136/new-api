@@ -122,6 +122,19 @@ func setProjectMembers(c *gin.Context) {
 	ok(c, nil)
 }
 
+// addProjectMember 追加单个项目成员。
+func addProjectMember(c *gin.Context) {
+	a, okk := actor(c)
+	if !okk {
+		return
+	}
+	var req struct {
+		UserId int `json:"user_id"`
+	}
+	c.ShouldBindJSON(&req)
+	reply(c, nil, hservice.AddProjectMember(a, idParam(c), req.UserId))
+}
+
 func listMembers(c *gin.Context) {
 	a, okk := actor(c)
 	if !okk {
@@ -355,7 +368,7 @@ func workbenchChat(c *gin.Context) {
 		IdemKey: c.GetHeader("Idempotency-Key")}
 	if v := c.GetHeader("X-Max-Cost-CNY"); v != "" {
 		f, _ := strconv.ParseFloat(v, 64)
-		opt.MaxCostFen = int64(f*100 + 0.5)
+		opt.MaxCostFen = maxCostFen(f)
 	}
 	RunChat(c, nil, a.Tenant, &p, opt, body)
 }
@@ -537,4 +550,28 @@ func statsFor(tenantId int64, since int64) gin.H {
 	q().Select("FROM_UNIXTIME(created_at, '%Y-%m-%d') as `key`, count(*) as count, COALESCE(SUM(net_cost),0) as cost").Group("`key`").Order("`key`").Scan(&byDay)
 	return gin.H{"total": total, "succeeded": okCnt, "fallback": fb, "cost_fen": cost, "purchase_fen": purchase,
 		"by_scene": byScene, "by_model": byModel, "by_day": byDay}
+}
+
+// applyRecharge 企业财务/管理员提交对公转账充值申请（待入账），运营核对银行流水后在运营端确认入账。
+// 前端不接触任何支付密钥；在线支付渠道接入前仅支持此线下流程。
+func applyRecharge(c *gin.Context) {
+	a, okk := actor(c)
+	if !okk {
+		return
+	}
+	if !a.CanFinance() {
+		fail(c, hservice.ErrForbidden("无财务权限"))
+		return
+	}
+	var req struct {
+		Amount int64  `json:"amount"` // 分
+		Remark string `json:"remark"`
+	}
+	c.ShouldBindJSON(&req)
+	o, err := hservice.CreateRecharge(a.UserId, a.TenantId, req.Amount, "pay", "bank", "", req.Remark)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	ok(c, o)
 }

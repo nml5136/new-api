@@ -6,9 +6,9 @@ import "github.com/QuantumNous/new-api/hwao/hmodel"
 // 按场景 ID 幂等，已存在则跳过；与 sql/mysql/hwao_router.sql 种子数据一致。
 func SeedDefaults() {
 	seeds := []struct{ id, name, desc, format string }{
-		{"SC01", "通用问答", "日常问答、写作与摘要", "text"},
-		{"SC02", "代码助手", "代码生成、解释与审查", "text"},
-		{"SC03", "结构化抽取", "按 JSON 模板抽取字段", "json"},
+		{"SC01", "电商文案", "根据商品资料生成合规的电商描述文案", "text"},
+		{"SC02", "办公摘要", "长文档/会议记录要点摘要，保留关键数字", "text"},
+		{"SC03", "结构化提取", "按字段模板从文本中抽取结构化 JSON", "json"},
 	}
 	for _, s := range seeds {
 		var n int64

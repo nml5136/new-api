@@ -168,11 +168,7 @@ func chatCompletions(c *gin.Context, raw string) {
 			writeErr(c, hservice.ErrInvalid("X-Max-Cost-CNY 无效"), "")
 			return
 		}
-		// 向下取整到分，且至少 1 分：上限只能比客户声明的更严，避免舍入成 0 被当作“未设置”
-		opt.MaxCostFen = int64(f * 100)
-		if opt.MaxCostFen < 1 {
-			opt.MaxCostFen = 1
-		}
+		opt.MaxCostFen = maxCostFen(f)
 	}
 	body, _ := io.ReadAll(c.Request.Body)
 	RunChat(c, k, t, p, opt, body)
@@ -636,4 +632,16 @@ func keyEnc(k *hmodel.PlatformKey, t *hmodel.Tenant, p *hmodel.Project) string {
 		return ""
 	}
 	return wk.InternalKeyEnc
+}
+
+// maxCostFen 元转分：向下取整且至少 1 分，上限只能比客户声明的更严，避免舍入成 0 被当作“未设置”。
+func maxCostFen(yuan float64) int64 {
+	if yuan <= 0 {
+		return 0
+	}
+	v := int64(yuan * 100)
+	if v < 1 {
+		v = 1
+	}
+	return v
 }

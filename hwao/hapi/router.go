@@ -43,6 +43,7 @@ func SetRouter(r *gin.Engine) {
 	u.POST("/projects", saveProject)
 	u.PUT("/projects/:id", saveProject)
 	u.PUT("/projects/:id/members", setProjectMembers)
+	u.POST("/projects/:id/members", addProjectMember)
 	u.GET("/members", listMembers)
 	u.POST("/members", addMember)
 	u.DELETE("/members/:id", removeMember)
@@ -58,6 +59,7 @@ func SetRouter(r *gin.Engine) {
 	u.PUT("/budgets/tenant", saveTenantBudget)
 	u.GET("/billing", billingOverview)
 	u.POST("/refunds", applyRefund)
+	u.POST("/recharges", applyRecharge)
 	u.POST("/feedback", submitFeedback)
 
 	o := r.Group("/platform/ops", middleware.AdminAuth())
@@ -99,7 +101,12 @@ func serveWeb(r *gin.Engine) {
 	r.Static("/hwao-assets", filepath.Join(dir, "hwao-assets"))
 	index := filepath.Join(dir, "index.html")
 	h := func(c *gin.Context) { c.File(index) }
-	for _, p := range []string{"/app", "/app/*any", "/ops", "/ops/*any", "/hwao", "/hwao/*any"} {
+	paths := []string{"/app", "/app/*any", "/ops", "/ops/*any", "/hwao", "/hwao/*any"}
+	// HWAO_WEB_ROOT=true 时由平台前端接管首页与公开页（/、/login 等），New API 自带控制台仍可通过 /console 访问
+	if os.Getenv("HWAO_WEB_ROOT") == "true" {
+		paths = append(paths, "/", "/login", "/pricing", "/docs", "/activate", "/reset-password")
+	}
+	for _, p := range paths {
 		r.GET(p, h)
 	}
 	common.SysLog("hwao web served from " + strings.TrimSpace(dir))

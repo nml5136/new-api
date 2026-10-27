@@ -512,9 +512,9 @@ CREATE TABLE IF NOT EXISTS `hwao_ticket` (
 -- ===================== 种子数据 =====================
 -- 预置场景（草稿；运营上架模型、补候选并评测通过后发布）
 INSERT IGNORE INTO hwao_scene (scene_id,name,description,status,current_version_id,prev_version_id,created_at,updated_at) VALUES
- ('SC01','通用问答','日常问答、写作与摘要','draft',0,0,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
- ('SC02','代码助手','代码生成、解释与审查','draft',0,0,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
- ('SC03','结构化抽取','按 JSON 模板抽取字段','draft',0,0,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());
+ ('SC01','电商文案','根据商品资料生成合规的电商描述文案','draft',0,0,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
+ ('SC02','办公摘要','长文档/会议记录要点摘要，保留关键数字','draft',0,0,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
+ ('SC03','结构化提取','按字段模板从文本中抽取结构化 JSON','draft',0,0,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());
 INSERT INTO hwao_scene_version (scene_id,version,output_format,min_quality,default_max_cost,default_max_tokens,has_fallback,status,change_reason,created_by,created_at)
 SELECT s.scene_id,1,IF(s.scene_id='SC03','json','text'),1,100,2048,0,'draft','初始化种子',0,UNIX_TIMESTAMP()
 FROM hwao_scene s WHERE NOT EXISTS (SELECT 1 FROM hwao_scene_version v WHERE v.scene_id=s.scene_id);

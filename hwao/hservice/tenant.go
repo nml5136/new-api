@@ -298,3 +298,23 @@ func WalletQuota(t *hmodel.Tenant) int {
 	}
 	return q
 }
+
+// AddProjectMember 把企业成员追加到项目（不影响项目已有成员），幂等。
+func AddProjectMember(a *Actor, projectId int64, userId int) error {
+	if !a.IsAdmin() {
+		return ErrForbidden("仅企业管理员可管理项目")
+	}
+	if !a.CanUseProject(projectId) {
+		return ErrForbidden("项目不存在")
+	}
+	var cnt int64
+	DB().Model(&hmodel.Member{}).Where("tenant_id = ? AND user_id = ? AND status = 1", a.TenantId, userId).Count(&cnt)
+	if cnt == 0 {
+		return ErrInvalid(fmt.Sprintf("用户 %d 不是本企业成员", userId))
+	}
+	DB().Model(&hmodel.ProjectMember{}).Where("project_id = ? AND user_id = ?", projectId, userId).Count(&cnt)
+	if cnt > 0 {
+		return nil
+	}
+	return DB().Create(&hmodel.ProjectMember{ProjectId: projectId, UserId: userId}).Error
+}

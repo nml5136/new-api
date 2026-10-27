@@ -276,6 +276,7 @@ func opsAlertUpdate(c *gin.Context) {
 		return
 	}
 	hservice.DB().Model(&hmodel.Alert{}).Where("id = ?", idParam(c)).Updates(map[string]any{"status": req.Status, "resolution": req.Resolution, "owner": c.GetInt("id")})
+	hservice.Audit(c.GetInt("id"), 0, "alert.update", strconv.FormatInt(idParam(c), 10), req.Status+" "+req.Resolution, c.ClientIP())
 	ok(c, nil)
 }
 
