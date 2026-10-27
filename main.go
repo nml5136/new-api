@@ -18,6 +18,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/controller"
+	hwaoapi "github.com/QuantumNous/new-api/hwao/hapi"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/middleware"
@@ -201,6 +202,8 @@ func main() {
 	InjectUmamiAnalytics()
 	InjectGoogleAnalytics()
 
+	// [hwao] 平台路由与调用网关须先于 New API 路由注册
+	hwaoapi.SetRouter(server)
 	// 设置路由
 	router.SetRouter(server, router.WebAssets{
 		BuildFS:   buildFS,
@@ -343,6 +346,12 @@ func InitResources() error {
 	if err != nil {
 		return err
 	}
+
+	// [hwao] 平台业务表建表、种子数据与后台任务
+	if err = hwaoapi.Migrate(); err != nil {
+		return err
+	}
+	hwaoapi.StartJobs()
 
 	// Initialize Redis
 	err = common.InitRedisClient()

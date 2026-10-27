@@ -19,17 +19,17 @@ const (
 
 // RouteInput 路由入参。
 type RouteInput struct {
-	Tenant         *hmodel.Tenant
-	Project        *hmodel.Project
-	Mode           string
-	Model          string // 固定模型模式下的模型名，或场景模式下的场景 ID（scene:SC01 / SC01）
-	SceneId        string
-	Preference     string
-	Session        *hmodel.Session
-	PromptTokens   int  // 估算输入 Token
-	MaxTokens      int  // 输出上限
-	NeedJson       bool // 需要结构化输出
-	NeedStream     bool
+	Tenant       *hmodel.Tenant
+	Project      *hmodel.Project
+	Mode         string
+	Model        string // 固定模型模式下的模型名，或场景模式下的场景 ID（scene:SC01 / SC01）
+	SceneId      string
+	Preference   string
+	Session      *hmodel.Session
+	PromptTokens int  // 估算输入 Token
+	MaxTokens    int  // 输出上限
+	NeedJson     bool // 需要结构化输出
+	NeedStream   bool
 }
 
 // Candidate 候选模型及其价格快照。

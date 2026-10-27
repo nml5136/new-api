@@ -75,7 +75,7 @@ func createKeyForProject(operator int, t *hmodel.Tenant, p *hmodel.Project, req 
 	tok := model.Token{
 		UserId: t.NewapiUserId, Key: internal, Status: common.TokenStatusEnabled,
 		Name: fmt.Sprintf("hwao-p%d", p.Id), CreatedTime: Now(), AccessedTime: Now(), ExpiredTime: -1,
-		UnlimitedQuota: true, // 钱包为唯一额度事实源，密钥额度由平台入口校验
+		UnlimitedQuota:     true, // 钱包为唯一额度事实源，密钥额度由平台入口校验
 		ModelLimitsEnabled: true, ModelLimits: limits, AllowIps: allowIps, Group: "",
 	}
 	if limits == "" {

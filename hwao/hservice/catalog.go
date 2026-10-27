@@ -3,6 +3,7 @@ package hservice
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/QuantumNous/new-api/common"
 	"math"
 
 	"github.com/QuantumNous/new-api/hwao/hmodel"
@@ -36,9 +37,16 @@ func SaveModel(operator int, m *hmodel.CatalogModel) error {
 	}
 	if m.Id > 0 {
 		var old hmodel.CatalogModel
-		if DB().First(&old, m.Id).Error == nil && (old.ContextLength != m.ContextLength || old.SupportJson != m.SupportJson || old.MaxOutput != m.MaxOutput) {
+		if DB().First(&old, m.Id).Error != nil {
+			return ErrInvalid("模型不存在")
+		}
+		m.CreatedAt = old.CreatedAt
+		m.CapabilityVersion = old.CapabilityVersion
+		if old.ContextLength != m.ContextLength || old.SupportJson != m.SupportJson || old.MaxOutput != m.MaxOutput {
 			m.CapabilityVersion = old.CapabilityVersion + 1 // 能力变化升级能力版本
 		}
+	} else if m.CapabilityVersion == 0 {
+		m.CapabilityVersion = 1
 	}
 	if err := DB().Save(m).Error; err != nil {
 		return err
@@ -141,26 +149,26 @@ func SyncPriceToNewAPI(p *hmodel.PriceVersion) error {
 		DB().Model(p).Update("sync_status", "platform_only")
 		return nil
 	}
-	usdPerM := float64(p.InputPrice) / 100 / usdCny
+	usdPerM := float64(p.InputPrice) / 100 / rate()
 	ratio := math.Round(usdPerM/2*1e6) / 1e6
 	comp := 1.0
 	if p.OutputPrice > 0 {
 		comp = math.Round(float64(p.OutputPrice)/float64(p.InputPrice)*1e6) / 1e6
 	}
-	mr := ratio_setting.GetModelRatioCopy()
-	cr := ratio_setting.GetCompletionRatioCopy()
-	mr[p.ModelName] = ratio
-	cr[p.ModelName] = comp
-	b1, _ := json.Marshal(mr)
-	b2, _ := json.Marshal(cr)
-	err1 := model.UpdateOption("ModelRatio", string(b1))
-	err2 := model.UpdateOption("CompletionRatio", string(b2))
-	if p.CacheReadPrice > 0 {
-		cache := ratio_setting.GetCacheRatioCopy()
-		cache[p.ModelName] = math.Round(float64(p.CacheReadPrice)/float64(p.InputPrice)*1e6) / 1e6
-		b3, _ := json.Marshal(cache)
-		_ = model.UpdateOption("CacheRatio", string(b3))
+	// 以数据库中已保存的配置为基础修改（避免把内存默认值整体写回触发上游校验）
+	upd := map[string]string{
+		"ModelRatio":      patchOption("ModelRatio", p.ModelName, ratio),
+		"CompletionRatio": patchOption("CompletionRatio", p.ModelName, comp),
 	}
+	if p.CacheReadPrice > 0 {
+		upd["CacheRatio"] = patchOption("CacheRatio", p.ModelName, math.Round(float64(p.CacheReadPrice)/float64(p.InputPrice)*1e6)/1e6)
+	}
+	// 定价相关配置须一次性提交，New API 会按模型整体校验
+	err1 := model.UpdateModelPricingOptions(upd)
+	if err1 != nil {
+		common.SysError(fmt.Sprintf("hwao price sync: %v lens=%d/%d", err1, len(upd["ModelRatio"]), len(upd["CompletionRatio"])))
+	}
+	var err2 error
 	// 回读校验：同步失败不得标记为已发布
 	got, ok, _ := ratio_setting.GetModelRatio(p.ModelName)
 	if err1 != nil || err2 != nil || !ok || math.Abs(got-ratio) > 1e-9 {
@@ -170,6 +178,19 @@ func SyncPriceToNewAPI(p *hmodel.PriceVersion) error {
 	}
 	DB().Model(p).Update("sync_status", "ok")
 	return nil
+}
+
+// patchOption 读取 New API options 表中的 JSON 配置，修改单个模型的值后返回新 JSON。
+func patchOption(key, name string, v float64) string {
+	var opt model.Option
+	model.DB.Where(map[string]any{"key": key}).First(&opt)
+	m := map[string]any{}
+	if opt.Value != "" {
+		_ = json.Unmarshal([]byte(opt.Value), &m)
+	}
+	m[name] = v
+	b, _ := json.Marshal(m)
+	return string(b)
 }
 
 // ===================== 场景与策略发布（FR05/FR25） =====================

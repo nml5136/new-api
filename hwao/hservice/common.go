@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -41,18 +42,30 @@ type BizError struct {
 func (e *BizError) Error() string { return e.Message }
 
 // 常用错误构造：400/401/403/402/409/429/503/504
-func ErrInvalid(msg string) *BizError { return &BizError{http.StatusBadRequest, "invalid_request", msg, false} }
-func ErrUnauth(msg string) *BizError  { return &BizError{http.StatusUnauthorized, "unauthenticated", msg, false} }
+func ErrInvalid(msg string) *BizError {
+	return &BizError{http.StatusBadRequest, "invalid_request", msg, false}
+}
+func ErrUnauth(msg string) *BizError {
+	return &BizError{http.StatusUnauthorized, "unauthenticated", msg, false}
+}
 func ErrForbidden(msg string) *BizError {
 	return &BizError{http.StatusForbidden, "permission_denied", msg, false}
 }
-func ErrQuota(msg string) *BizError    { return &BizError{http.StatusPaymentRequired, "insufficient_quota", msg, false} }
-func ErrConflict(msg string) *BizError { return &BizError{http.StatusConflict, "idempotency_conflict", msg, false} }
-func ErrRate(msg string) *BizError     { return &BizError{http.StatusTooManyRequests, "rate_limited", msg, true} }
+func ErrQuota(msg string) *BizError {
+	return &BizError{http.StatusPaymentRequired, "insufficient_quota", msg, false}
+}
+func ErrConflict(msg string) *BizError {
+	return &BizError{http.StatusConflict, "idempotency_conflict", msg, false}
+}
+func ErrRate(msg string) *BizError {
+	return &BizError{http.StatusTooManyRequests, "rate_limited", msg, true}
+}
 func ErrNoResource(msg string) *BizError {
 	return &BizError{http.StatusServiceUnavailable, "no_resource", msg, true}
 }
-func ErrTimeout(msg string) *BizError { return &BizError{http.StatusGatewayTimeout, "timeout", msg, false} }
+func ErrTimeout(msg string) *BizError {
+	return &BizError{http.StatusGatewayTimeout, "timeout", msg, false}
+}
 
 // AsBiz 把任意错误转换为 BizError（未知错误按 503 不可用处理，且不泄露内部细节）。
 func AsBiz(err error) *BizError {
@@ -73,6 +86,14 @@ const QuotaRateVersion = "Q1"
 // usdCny 启动时固定汇率（来自 New API 设置或环境变量 HWAO_USD_CNY）。
 var usdCny float64
 
+// rate 返回固定汇率，首次调用时初始化（须在 New API 选项加载后调用）。
+func rate() float64 {
+	rateOnce.Do(initRate)
+	return usdCny
+}
+
+var rateOnce sync.Once
+
 func initRate() {
 	usdCny = operation_setting.USDExchangeRate
 	if v := os.Getenv("HWAO_USD_CNY"); v != "" {
@@ -85,12 +106,12 @@ func initRate() {
 
 // QuotaToFen New API 内部额度 → 人民币分。
 func QuotaToFen(quota int) int64 {
-	return int64(math.Floor(float64(quota)*100*usdCny/common.QuotaPerUnit + 0.5))
+	return int64(math.Floor(float64(quota)*100*rate()/common.QuotaPerUnit + 0.5))
 }
 
 // FenToQuota 人民币分 → New API 内部额度（向下取整，避免多发额度）。
 func FenToQuota(fen int64) int {
-	return int(math.Floor(float64(fen) * common.QuotaPerUnit / (100 * usdCny)))
+	return int(math.Floor(float64(fen) * common.QuotaPerUnit / (100 * rate())))
 }
 
 // ===================== 安全工具 =====================

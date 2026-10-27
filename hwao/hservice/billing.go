@@ -6,7 +6,6 @@ import (
 	"github.com/QuantumNous/new-api/hwao/hmodel"
 	"github.com/QuantumNous/new-api/model"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // ===================== 充值、退款、补偿与对账（FR11/FR12/FR17/FR18） =====================
@@ -90,12 +89,14 @@ func ConfirmRecharge(operator int, orderNo, tradeNo string, paidFen int64) (*hmo
 // applyWallet 带唯一业务号的钱包变动：先写流水占号（重复则视为已处理），再改 New API 额度；改额度失败回滚流水。
 func applyWallet(tenantId int64, userId int, bizNo, kind string, quota int, amount int64, remark string) error {
 	le := &hmodel.LedgerEntry{BizNo: bizNo, TenantId: tenantId, Kind: kind, Quota: quota, Amount: amount, Remark: remark}
-	res := DB().Clauses(clause.OnConflict{DoNothing: true}).Create(le)
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return nil // 已处理
+	// 直接插入：唯一键冲突即视为已处理（MySQL 下 ON DUPLICATE KEY 的影响行数不可靠，不用它判断）
+	if err := DB().Create(le).Error; err != nil {
+		var n int64
+		DB().Model(&hmodel.LedgerEntry{}).Where("biz_no = ?", bizNo).Count(&n)
+		if n > 0 {
+			return nil // 已处理
+		}
+		return err
 	}
 	var err error
 	if quota >= 0 {

@@ -75,6 +75,8 @@ func Gateway() gin.HandlerFunc {
 		}
 		raw := strings.TrimPrefix(auth, "Bearer ")
 		switch {
+		case c.Request.Method == http.MethodGet && strings.HasPrefix(c.Request.URL.Path, "/platform/requests/"):
+			c.Next() // 结果查询由平台路由按平台密钥鉴权
 		case c.Request.Method == http.MethodPost && c.Request.URL.Path == "/v1/chat/completions":
 			chatCompletions(c, raw)
 		case c.Request.Method == http.MethodGet && c.Request.URL.Path == "/v1/models":
@@ -166,7 +168,11 @@ func chatCompletions(c *gin.Context, raw string) {
 			writeErr(c, hservice.ErrInvalid("X-Max-Cost-CNY 无效"), "")
 			return
 		}
-		opt.MaxCostFen = int64(f*100 + 0.5)
+		// 向下取整到分，且至少 1 分：上限只能比客户声明的更严，避免舍入成 0 被当作“未设置”
+		opt.MaxCostFen = int64(f * 100)
+		if opt.MaxCostFen < 1 {
+			opt.MaxCostFen = 1
+		}
 	}
 	body, _ := io.ReadAll(c.Request.Body)
 	RunChat(c, k, t, p, opt, body)
@@ -544,13 +550,14 @@ func beginIdempotency(c *gin.Context, tenantId int64, key string, body []byte, r
 	hash := hservice.Digest(string(body))
 	rec := &hmodel.Idempotency{TenantId: tenantId, Api: "chat.completions", IdemKey: key, RequestHash: hash, RequestId: requestId,
 		Status: "received", ExpiresAt: hservice.Now() + 86400}
-	res := hservice.DB().Clauses(clause.OnConflict{DoNothing: true}).Create(rec)
-	if res.Error == nil && res.RowsAffected == 1 {
-		return rec, false, nil
-	}
+	// MySQL 下 ON DUPLICATE KEY 的影响行数不可靠，统一按唯一键回读，以 request_id 判断是否本次登记成功
+	hservice.DB().Clauses(clause.OnConflict{DoNothing: true}).Create(rec)
 	var old hmodel.Idempotency
 	if hservice.DB().Where("tenant_id = ? AND api = ? AND idem_key = ?", tenantId, rec.Api, key).First(&old).Error != nil {
 		return nil, false, hservice.ErrNoResource("幂等登记失败")
+	}
+	if old.RequestId == requestId {
+		return &old, false, nil
 	}
 	if old.RequestHash != hash {
 		return nil, false, hservice.ErrConflict("同一 Idempotency-Key 的请求内容不一致")
