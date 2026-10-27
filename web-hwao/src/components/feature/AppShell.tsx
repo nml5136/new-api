@@ -8,6 +8,7 @@ const groups = [
   {
     title: "工作",
     items: [
+      { to: "/app/chat", label: "对话", icon: "ri-chat-3-line" },
       { to: "/app/overview", label: "总览", icon: "ri-dashboard-line" },
       { to: "/app/scenes", label: "场景中心", icon: "ri-layout-grid-line" },
       { to: "/app/workspace", label: "任务与会话", icon: "ri-sparkling-2-line" },
@@ -34,6 +35,7 @@ const groups = [
 ];
 
 const searchTargets = [
+  { label: "新建对话", to: "/app/chat", icon: "ri-chat-3-line", hint: "对话" },
   { label: "开始电商文案任务", to: "/app/workspace", icon: "ri-quill-pen-line", hint: "任务" },
   { label: "场景中心", to: "/app/scenes", icon: "ri-layout-grid-line", hint: "页面" },
   { label: "调用记录", to: "/app/requests", icon: "ri-file-list-3-line", hint: "页面" },
@@ -108,15 +110,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       <div className="px-3 pt-4">
         <Link
-          to="/app/workspace"
+          to="/app/chat"
           className={cx(
             "flex items-center rounded-xl bg-primary-500 text-background-50 transition-colors hover:bg-primary-600",
             collapsed ? "h-10 justify-center" : "h-10 gap-2 px-3",
           )}
-          title="新建任务"
+          title="新对话"
         >
           <i className="ri-add-line text-base" />
-          {collapsed ? null : <span className="text-[13px] font-medium whitespace-nowrap">新建任务</span>}
+          {collapsed ? null : <span className="text-[13px] font-medium whitespace-nowrap">新对话</span>}
         </Link>
       </div>
 

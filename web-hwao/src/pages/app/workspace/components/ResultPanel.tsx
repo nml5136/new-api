@@ -12,6 +12,7 @@ interface Props {
   feedback: "up" | "down" | null;
   onCopy: () => void;
   onDownload: () => void;
+  onContinue?: () => void; // 继续到自由对话
   onFeedback: (value: "up" | "down") => void;
   onRegenerate: () => void;
   onOpenDetail: () => void;
@@ -37,6 +38,7 @@ export default function ResultPanel({
   feedback,
   onCopy,
   onDownload,
+  onContinue,
   onFeedback,
   onRegenerate,
   onOpenDetail,
@@ -234,6 +236,12 @@ export default function ResultPanel({
                 <i className="ri-download-2-line" />
                 下载文本
               </button>
+              {onContinue ? (
+                <button type="button" onClick={onContinue} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-2.5 text-[11px] text-primary-700 transition-colors hover:bg-primary-100">
+                  <i className="ri-chat-3-line" />
+                  继续对话
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={onRestoreSource}

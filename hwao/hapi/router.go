@@ -52,6 +52,13 @@ func SetRouter(r *gin.Engine) {
 	u.POST("/keys/:id/:action", keyAction)
 	u.GET("/requests", listRequests)
 	u.POST("/chat/completions", workbenchChat)
+	// 网页自由对话（正文服务端保存，删除不影响账务）
+	u.GET("/chats", listChats)
+	u.POST("/chats", createChat)
+	u.PUT("/chats/:cid", updateChat)
+	u.DELETE("/chats/:cid", deleteChat)
+	u.GET("/chats/:cid/messages", chatMessages)
+	u.POST("/chats/:cid/messages", sendChat)
 	u.GET("/sessions", listSessions)
 	u.GET("/sessions/:sid", sessionMessages)
 	u.DELETE("/sessions/:sid", sessionMessages)

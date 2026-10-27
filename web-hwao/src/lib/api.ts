@@ -164,3 +164,16 @@ export const ts2str = (t?: number) => {
 export const sceneToApi: Record<string, string> = { "commerce-copy": "SC01", "office-summary": "SC02", "info-extract": "SC03" };
 export const sceneFromApi = (id: string) =>
   (Object.entries(sceneToApi).find(([, v]) => v === id)?.[0] ?? id) as any;
+
+// streamFetch 发起需要登录态的流式请求（SSE）；与 raw 一致使用内存访问令牌，不暴露任何内部令牌。
+export async function streamFetch(path: string, body: unknown, signal?: AbortSignal): Promise<Response> {
+  if (getUser() && (!accessToken || (accessExpiresAt && accessExpiresAt * 1000 < Date.now() + 15000))) await refreshAuth();
+  const go = () => fetch(path, { method: "POST", credentials: "same-origin", headers: headers({ Accept: "text/event-stream" }), body: JSON.stringify(body), signal });
+  let res = await go();
+  if (res.status === 401 && getUser() && (await refreshAuth())) res = await go();
+  if (!res.ok) {
+    const d = await res.json().catch(() => null);
+    throw new ApiError(res.status, d?.code || d?.error?.code || String(res.status), d?.message || d?.error?.message || `请求失败（${res.status}）`, d?.request_id || res.headers.get("X-Request-Id") || undefined, d?.retryable);
+  }
+  return res;
+}

@@ -1,3 +1,4 @@
+import { sceneToApi } from "@/lib/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge, Button, Drawer, Modal, Notice, Select } from "@/components/base/ui";
@@ -466,6 +467,12 @@ export default function WorkspacePage() {
             feedback={feedback}
             onCopy={copy}
             onDownload={download}
+            onContinue={output && !running ? () => navigate("/app/chat", {
+              state: {
+                title, route_mode: "scene", model: `scene:${sceneToApi[scene] || scene}`,
+                seed: [{ role: "user", content: `${title}\n\n${prompt}` }, { role: "assistant", content: output, request_id: resultId || "" }],
+              },
+            }) : undefined}
             onFeedback={(v) => setFeedback(v)}
             onRegenerate={() => setRegenOpen(true)}
             onOpenDetail={() => navigate(resultId ? `/app/requests?focus=${resultId}` : "/app/requests")}

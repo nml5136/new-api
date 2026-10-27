@@ -58,6 +58,7 @@ func loopbackBase() string {
 // writeErr 统一错误体 {code,message,request_id,retryable}（FR23）。
 func writeErr(c *gin.Context, err error, requestId string) {
 	b := hservice.AsBiz(err)
+	c.Set(ctxChatErr, b) // 供网页对话记录友好错误
 	if requestId != "" {
 		c.Header("X-Request-Id", requestId)
 	}
@@ -356,6 +357,8 @@ func RunChat(c *gin.Context, k *hmodel.PlatformKey, t *hmodel.Tenant, p *hmodel.
 		c.Header("X-Hwao-Model", cand.Model.ModelName)
 		content, outcome := relayResponse(c, resp, start, req)
 		resp.Body.Close()
+		c.Set(ctxChatContent, content) // 供网页对话持久化回复正文
+		c.Set(ctxChatOutcome, outcome)
 		hservice.DB().Model(att).Updates(map[string]any{"status": outcome, "http_status": resp.StatusCode, "finished_at": hservice.Now()})
 		req.Status = outcome
 		if outcome != hmodel.ReqSucceeded && resp.StatusCode != 200 {

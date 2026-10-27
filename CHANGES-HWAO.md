@@ -28,3 +28,13 @@
 - 预算接收人、退款开票抬头、调用详情、模型更新时间、场景单次上限、运营资源健康/评测进度改用真实数据或空状态。
 - 首页、定价、文档、重置密码页移除“演示环境/演示数据”等表述；首页示意保留并标注“示意”。无上游文件改动。
 - 顶栏企业徽标、头像改为取企业名/当前用户显示名首字（原硬编码“星”“林”）。
+
+## 2026-10-27 网页自由对话（/app/chat）
+- 新增 hwao/hapi/chat.go：/platform/chats 增删改查、消息列表、流式发送（复用 RunChat 网关链路：登录态鉴权、项目权限与预算、路由/兜底、按日志结算；服务端回环使用工作台内部密钥，浏览器不接触任何令牌）。
+- hwao/hapi/gateway.go：RunChat/writeErr 增加 c.Set 钩子，供对话持久化回复正文与错误。
+- hwao/hapi/router.go、jobs.go：注册对话路由；每小时清理超过 HWAO_CHAT_RETENTION_DAYS（默认 180 天）的对话正文。
+- hwao/hmodel/models.go、sql/mysql/hwao_router.sql：新增 hwao_conversation、hwao_conversation_message。删除对话仅删正文与会话历史，hwao_request 与账务记录保留（FR21）。
+- 上下文超限（FR10）：发送前按网关同口径预估，超限返回 context_length_exceeded，用户确认后裁剪较早消息重试。
+- web-hwao：新增 pages/app/chat（Markdown + 代码高亮、SSE 流式、停止/重新生成提示计费、模型/路由模式选择、每条回复的实际模型/Token/费用/兜底说明、响应式）；导航“工作”组首项“对话”、侧栏按钮改为“新对话”；工作台结果新增“继续对话”。新增依赖 react-markdown、remark-gfm、rehype-highlight、highlight.js（不渲染原始 HTML）。
+- 测试桩：runtime/mock_upstream.py（仓库外）已支持 stream，仅用于联调，可删除并把渠道 1 指回真实上游。
+- 未改动 New API 上游文件。

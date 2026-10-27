@@ -520,3 +520,39 @@ SELECT s.scene_id,1,IF(s.scene_id='SC03','json','text'),1,100,2048,0,'draft','�
 FROM hwao_scene s WHERE NOT EXISTS (SELECT 1 FROM hwao_scene_version v WHERE v.scene_id=s.scene_id);
 -- 角色：企业侧 tenant_admin（管理员）/ member（成员）存于 hwao_member.role；
 -- 平台侧一期以 New API 管理员（role>=10）作为运营+财务，细分岗位见 hwao_staff（待确认）。
+
+-- 网页自由对话（删除对话仅删正文，调用与账务记录保留；正文默认保留 180 天）
+CREATE TABLE IF NOT EXISTS `hwao_conversation` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `conv_id` varchar(64) DEFAULT NULL,
+  `tenant_id` bigint(20) DEFAULT NULL,
+  `project_id` bigint(20) DEFAULT NULL,
+  `user_id` bigint(20) DEFAULT NULL,
+  `title` varchar(128) DEFAULT NULL,
+  `model` varchar(128) DEFAULT NULL,
+  `route_mode` varchar(16) DEFAULT NULL,
+  `session_id` varchar(64) DEFAULT NULL,
+  `deleted` tinyint(1) DEFAULT NULL,
+  `created_at` bigint(20) DEFAULT NULL,
+  `updated_at` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_hwao_conversation_conv_id` (`conv_id`),
+  KEY `idx_hwao_conversation_tenant_id` (`tenant_id`),
+  KEY `idx_hwao_conversation_project_id` (`project_id`),
+  KEY `idx_hwao_conversation_user_id` (`user_id`),
+  KEY `idx_hwao_conversation_deleted` (`deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `hwao_conversation_message` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `conv_id` varchar(64) DEFAULT NULL,
+  `role` varchar(16) DEFAULT NULL,
+  `content` mediumtext DEFAULT NULL,
+  `request_id` varchar(64) DEFAULT NULL,
+  `status` varchar(16) DEFAULT NULL,
+  `error_code` varchar(64) DEFAULT NULL,
+  `error_message` varchar(512) DEFAULT NULL,
+  `created_at` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_hwao_conversation_message_conv_id` (`conv_id`),
+  KEY `idx_hwao_conversation_message_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

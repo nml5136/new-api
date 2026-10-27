@@ -49,7 +49,7 @@ func StartJobs() {
 		hservice.BlockExpiredModels()
 		hservice.DB().Where("expires_at < ?", hservice.Now()).Delete(&hmodel.Idempotency{}) // 幂等记录保留 24 小时
 	})
-	go loop(time.Hour, func() { hservice.RunWalletRecon() })
+	go loop(time.Hour, func() { hservice.RunWalletRecon(); PurgeExpiredChats() }) // 含网页对话正文过期清理
 }
 
 func loop(d time.Duration, fn func()) {

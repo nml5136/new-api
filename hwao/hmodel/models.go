@@ -621,6 +621,41 @@ type Ticket struct {
 
 func (Ticket) TableName() string { return "hwao_ticket" }
 
+// ===================== 网页自由对话（工作台“对话”） =====================
+
+// Conversation 网页对话：绑定企业、项目与用户；删除仅删除正文，调用与账务记录保留（FR21）。
+type Conversation struct {
+	Id        int64  `json:"id" gorm:"primaryKey"`
+	ConvId    string `json:"conv_id" gorm:"type:varchar(64);uniqueIndex"`
+	TenantId  int64  `json:"tenant_id" gorm:"index"`
+	ProjectId int64  `json:"project_id" gorm:"index"`
+	UserId    int    `json:"user_id" gorm:"index"`
+	Title     string `json:"title" gorm:"type:varchar(128)"`
+	Model     string `json:"model" gorm:"type:varchar(128)"`     // 具体模型名 / scene:SCxx / auto
+	RouteMode string `json:"route_mode" gorm:"type:varchar(16)"` // fixed / scene / session
+	SessionId string `json:"session_id" gorm:"type:varchar(64)"` // 会话路由模式下持久化的 X-Session-Id
+	Deleted   bool   `json:"deleted" gorm:"index"`
+	CreatedAt int64  `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt int64  `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
+func (Conversation) TableName() string { return "hwao_conversation" }
+
+// ConversationMessage 网页对话消息正文；费用、Token 以 request_id 关联 hwao_request 实时读取。
+type ConversationMessage struct {
+	Id           int64  `json:"id" gorm:"primaryKey"`
+	ConvId       string `json:"conv_id" gorm:"type:varchar(64);index"`
+	Role         string `json:"role" gorm:"type:varchar(16)"` // user / assistant
+	Content      string `json:"content" gorm:"type:mediumtext"`
+	RequestId    string `json:"request_id" gorm:"type:varchar(64)"`
+	Status       string `json:"status" gorm:"type:varchar(16)"` // succeeded / cancelled / interrupted / failed
+	ErrorCode    string `json:"error_code" gorm:"type:varchar(64)"`
+	ErrorMessage string `json:"error_message" gorm:"type:varchar(512)"`
+	CreatedAt    int64  `json:"created_at" gorm:"autoCreateTime;index"`
+}
+
+func (ConversationMessage) TableName() string { return "hwao_conversation_message" }
+
 // AllModels 返回需要 AutoMigrate 的全部模型（与 sql/mysql/hwao_router.sql 保持同步）。
 func AllModels() []any {
 	return []any{
@@ -629,6 +664,6 @@ func AllModels() []any {
 		&Session{}, &SessionMessage{}, &Request{}, &Attempt{}, &BudgetCounter{},
 		&Reservation{}, &Idempotency{}, &Feedback{}, &EvalResult{}, &RechargeOrder{},
 		&Refund{}, &LedgerEntry{}, &ReconDiff{}, &SyncCursor{}, &Invoice{}, &Alert{},
-		&AuditLog{}, &Ticket{},
+		&AuditLog{}, &Ticket{}, &Conversation{}, &ConversationMessage{},
 	}
 }

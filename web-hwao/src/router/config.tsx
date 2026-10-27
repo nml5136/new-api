@@ -14,6 +14,7 @@ import ResetPasswordPage from "@/pages/reset-password/page";
 import OverviewPage from "@/pages/app/overview/page";
 import ScenesPage from "@/pages/app/scenes/page";
 import WorkspacePage from "@/pages/app/workspace/page";
+import ChatPage from "@/pages/app/chat/page";
 import ModelsPage from "@/pages/app/models/page";
 import ProjectsPage from "@/pages/app/projects/page";
 import KeysPage from "@/pages/app/keys/page";
@@ -55,6 +56,7 @@ const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/app/overview" replace /> },
       { path: "overview", element: <OverviewPage /> },
       { path: "scenes", element: <ScenesPage /> },
+      { path: "chat", element: <ChatPage /> },
       { path: "workspace", element: <WorkspacePage /> },
       { path: "models", element: <ModelsPage /> },
       { path: "projects", element: <ProjectsPage /> },
