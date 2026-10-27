@@ -97,6 +97,12 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
               登录
             </Link>
             <Link
+              to="/sign-up"
+              className="rounded-full px-4 py-2 text-[13px] text-background-50/75 transition-colors hover:text-background-50 whitespace-nowrap"
+            >
+              注册
+            </Link>
+            <Link
               to="/login"
               className="inline-flex items-center gap-1.5 rounded-xl bg-background-50 px-4 py-2.5 text-[13px] font-medium text-background-950 transition-colors hover:bg-background-100 whitespace-nowrap"
             >

@@ -9,6 +9,7 @@ import PricingPage from "@/pages/pricing/page";
 import DocsPage from "@/pages/docs/page";
 import LoginPage from "@/pages/login/page";
 import ActivatePage from "@/pages/activate/page";
+import SignUpPage from "@/pages/sign-up/page";
 import ResetPasswordPage from "@/pages/reset-password/page";
 import OverviewPage from "@/pages/app/overview/page";
 import ScenesPage from "@/pages/app/scenes/page";
@@ -37,6 +38,9 @@ const routes: RouteObject[] = [
   { path: "/docs", element: <DocsPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/activate", element: <ActivatePage /> },
+  // 注册页（/register 为兼容 New API 原生路径）
+  { path: "/sign-up", element: <SignUpPage /> },
+  { path: "/register", element: <SignUpPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
   {
     path: "/app",

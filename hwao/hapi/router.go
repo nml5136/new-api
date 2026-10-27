@@ -104,7 +104,7 @@ func serveWeb(r *gin.Engine) {
 	paths := []string{"/app", "/app/*any", "/ops", "/ops/*any", "/hwao", "/hwao/*any"}
 	// HWAO_WEB_ROOT=true 时由平台前端接管首页与公开页（/、/login 等），New API 自带控制台仍可通过 /console 访问
 	if os.Getenv("HWAO_WEB_ROOT") == "true" {
-		paths = append(paths, "/", "/login", "/pricing", "/docs", "/activate", "/reset-password")
+		paths = append(paths, "/", "/login", "/pricing", "/docs", "/activate", "/reset-password", "/sign-up", "/register")
 	}
 	for _, p := range paths {
 		r.GET(p, h)

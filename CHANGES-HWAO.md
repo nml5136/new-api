@@ -17,3 +17,7 @@
 
 ## 2026-10-27 设置页复用 New API 原生能力
 - web-hwao/src/pages/app/settings/page.tsx：个人资料（PUT /api/user/self）、登录会话（/api/user/sessions*）、2FA/Passkey 状态读取接 New API 原生接口；修改密码、2FA、访问令牌、通知设置跳转 New API 原生页面（/security、/profile）；企业资料只读；无后端新增，无上游文件改动。
+
+## 2026-10-27 注册入口
+- web-hwao：新增 /sign-up（及 /register）注册页，调用 New API /api/user/register，注册后自动登录并跳转 /activate（携带 ?code=）；首页导航与登录页增加“注册”入口。
+- hwao/hapi/router.go：HWAO_WEB_ROOT 模式下 /sign-up、/register 由平台前端接管（原先落到未构建的 New API 前端导致白屏）。

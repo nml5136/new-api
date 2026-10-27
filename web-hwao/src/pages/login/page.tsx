@@ -191,7 +191,7 @@ export default function LoginPage() {
 
           <div className="mt-8 border-t border-background-200 pt-4 text-[11px] leading-relaxed text-foreground-500">
             <p>
-              还没有企业空间？<Link to="/activate" className="text-primary-600 hover:text-primary-700">使用邀请开通</Link>
+              还没有账号？<Link to="/sign-up" className="text-primary-600 hover:text-primary-700">注册</Link>；已有账号但没有企业空间？<Link to="/activate" className="text-primary-600 hover:text-primary-700">使用邀请开通</Link>
             </p>
             <p className="mt-2 text-[10px] text-foreground-400">
               登录遇到问题可联系企业管理员或平台运营。
