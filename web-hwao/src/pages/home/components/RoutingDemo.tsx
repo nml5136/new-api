@@ -226,7 +226,7 @@ export default function RoutingDemo() {
           </div>
           <p className="text-[11px] font-medium leading-snug text-background-50/90">{scene.task}</p>
           <p className="mt-0.5 text-[9.5px] text-background-50/45">{scene.detail}</p>
-          <div className="mt-1.5 flex items-center gap-1 rounded bg-background-50/5 px-1.5 py-0.5">
+          <div className="mt-1.5 flex items-center gap-1 rounded-sm bg-background-50/5 px-1.5 py-0.5">
             <i className="ri-wallet-3-line text-[9px] text-accent-400" />
             <span className="text-[9px] text-background-50/55">单次上限 {scene.cap}</span>
           </div>
@@ -311,11 +311,11 @@ export default function RoutingDemo() {
           </div>
           {retryMode && stage >= 3 ? (
             <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-              <div className="rounded border border-warning/40 bg-warning-soft/20 px-1.5 py-1">
+              <div className="rounded-sm border border-warning/40 bg-warning-soft/20 px-1.5 py-1">
                 <p className="text-[8.5px] text-warning">渠道 1 · 明确限流</p>
                 <p className="text-[8px] text-background-50/35">未产生客户费用</p>
               </div>
-              <div className="rounded border border-accent-500/35 bg-accent-500/10 px-1.5 py-1">
+              <div className="rounded-sm border border-accent-500/35 bg-accent-500/10 px-1.5 py-1">
                 <p className="text-[8.5px] text-accent-300">渠道 2 · 成功</p>
                 <p className="text-[8px] text-background-50/35">模型仍为 A，单一净费用</p>
               </div>
@@ -326,7 +326,7 @@ export default function RoutingDemo() {
                 <p
                   key={line}
                   className={cx(
-                    "truncate rounded bg-background-50/5 px-1.5 py-0.5 font-mono-ui text-[8.5px] transition-opacity duration-500",
+                    "truncate rounded-sm bg-background-50/5 px-1.5 py-0.5 font-mono-ui text-[8.5px] transition-opacity duration-500",
                     stage >= 3 && (reduced || elapsed >= 9000 + i * 600) ? "text-background-50/60 opacity-100" : "text-background-50/20 opacity-60",
                   )}
                 >
@@ -422,7 +422,7 @@ export default function RoutingDemo() {
       </div>
 
       <div className="mt-2 h-0.5 w-full overflow-hidden rounded-full bg-background-50/10">
-        <div className="h-full rounded-full bg-gradient-to-r from-primary-400 to-accent-400 transition-[width] duration-100" style={{ width: `${progress}%` }} />
+        <div className="h-full rounded-full bg-linear-to-r from-primary-400 to-accent-400 transition-[width] duration-100" style={{ width: `${progress}%` }} />
       </div>
     </div>
   );

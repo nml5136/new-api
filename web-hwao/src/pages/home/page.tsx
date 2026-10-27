@@ -35,7 +35,7 @@ export default function Home() {
     <PublicLayout>
       <section className="relative overflow-hidden bg-background-950 pt-[72px] text-background-50">
         <div className="pointer-events-none absolute inset-0 hero-glow" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background-950" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-background-950" />
         <div className="relative mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 pb-24 pt-10 md:px-8 lg:grid-cols-[52%_48%] lg:items-center lg:gap-6 lg:pt-14">
           <div className="animate-rise">
             <span className="inline-flex items-center gap-2 rounded-full border border-background-50/15 bg-background-50/5 px-3 py-1.5 text-[11px] text-background-50/70">
@@ -222,7 +222,7 @@ export default function Home() {
                 让路由留在平台
               </h2>
               <p className="mt-3 max-w-[360px] text-xs leading-relaxed text-background-50/55">
-                沿用兼容的对话接口，把 model 写成 <code className="rounded bg-background-50/10 px-1 py-0.5 font-mono-ui text-[11px] text-accent-400">scene:commerce-copy</code>，
+                沿用兼容的对话接口，把 model 写成 <code className="rounded-sm bg-background-50/10 px-1 py-0.5 font-mono-ui text-[11px] text-accent-400">scene:commerce-copy</code>，
                 由平台完成候选与预算校验。场景识别是平台扩展，需要后端适配。
               </p>
               <div className="mt-5 space-y-2 text-[11px] text-background-50/55">

@@ -46,7 +46,7 @@ export default function OpsOverviewPage() {
             <div key={metric.label} className={cx("p-4 md:p-5", i < 2 ? "border-b border-background-100 lg:border-b-0" : "")}>
               <div className="flex items-center justify-between">
                 <p className="text-[10.5px] text-foreground-500">{metric.label}</p>
-                <span className="rounded bg-background-100 px-1.5 py-0.5 text-[9px] text-foreground-400">{metric.note}</span>
+                <span className="rounded-sm bg-background-100 px-1.5 py-0.5 text-[9px] text-foreground-400">{metric.note}</span>
               </div>
               <p className="tnum mt-1.5 font-heading text-xl font-semibold text-foreground-950 md:text-2xl">{metric.value}</p>
               <p className={cx("mt-1 text-[9.5px]", metric.delta.startsWith("+") ? "text-success" : "text-foreground-500")}>{metric.delta}</p>

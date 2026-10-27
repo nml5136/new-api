@@ -34,7 +34,7 @@ export default function ModelPanel({ model, preference, cap, estimated, remainin
           type="button"
           onClick={onCollapse}
           aria-label="收起解释栏"
-          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-background-50/40 hover:bg-background-50/10 hover:text-background-50/80"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-background-50/40 hover:bg-background-50/10 hover:text-background-50/80"
         >
           <i className="ri-contract-right-line text-xs" />
         </button>
@@ -78,7 +78,7 @@ export default function ModelPanel({ model, preference, cap, estimated, remainin
             <span>剩余预算 {money(Math.max(0, remaining))}</span>
           </div>
           {overCap ? (
-            <p className="mt-2 rounded bg-warning-soft px-2 py-1 text-[9.5px] leading-relaxed text-warning">预估超过单次上限，提交会被拒绝。</p>
+            <p className="mt-2 rounded-sm bg-warning-soft px-2 py-1 text-[9.5px] leading-relaxed text-warning">预估超过单次上限，提交会被拒绝。</p>
           ) : null}
         </div>
 

@@ -56,7 +56,7 @@ export default function LoginPage() {
             你只需要描述要完成的任务。平台完成场景校验、候选推荐、预算检查与会话保持，把结果与费用一并留下。
           </p>
 
-          <div className="mt-9 rounded-2xl border border-background-50/12 bg-background-900/50 p-4 backdrop-blur">
+          <div className="mt-9 rounded-2xl border border-background-50/12 bg-background-900/50 p-4 backdrop-blur-sm">
             <div className="mb-3 flex items-center justify-between text-[10px] text-background-50/40">
               <span>任务路由演示</span>
               <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-accent-500" />预算内</span>
@@ -157,7 +157,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="h-3.5 w-3.5 cursor-pointer rounded border-background-300"
+                  className="h-3.5 w-3.5 cursor-pointer rounded-sm border-background-300"
                   style={{ accentColor: "oklch(var(--primary-500))" }}
                 />
                 记住登录

@@ -70,7 +70,7 @@ export default function TaskDemo() {
                 onClick={() => setActive(tab.id)}
                 className={cx(
                   "cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
-                  active === tab.id ? "bg-background-50 text-foreground-950 shadow-sm" : "text-foreground-600 hover:text-foreground-900",
+                  active === tab.id ? "bg-background-50 text-foreground-950 shadow-xs" : "text-foreground-600 hover:text-foreground-900",
                 )}
               >
                 {tab.label}
@@ -91,12 +91,12 @@ export default function TaskDemo() {
           </div>
 
           <div className="flex items-center justify-center px-1 py-1 lg:flex-col lg:px-0">
-            <span className="hidden h-full w-px bg-gradient-to-b from-transparent via-primary-200 to-transparent lg:block" />
+            <span className="hidden h-full w-px bg-linear-to-b from-transparent via-primary-200 to-transparent lg:block" />
             <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-[10px] font-medium text-primary-700">
               <i className="ri-git-branch-line" />
               {current.model}
             </span>
-            <span className="hidden h-full w-px bg-gradient-to-b from-primary-200 via-primary-200 to-transparent lg:block" />
+            <span className="hidden h-full w-px bg-linear-to-b from-primary-200 via-primary-200 to-transparent lg:block" />
           </div>
 
           <div className="min-w-0 rounded-xl border border-primary-200 bg-primary-50/40 p-4">
@@ -119,7 +119,7 @@ export default function TaskDemo() {
           ))}
           <span className="flex items-center gap-1.5"><i className="ri-wallet-3-line text-accent-600" />预计费用 ¥0.04</span>
           <span className="ml-auto flex flex-wrap items-center gap-2 text-[10px] text-foreground-400">
-            <span className="rounded bg-background-100 px-1.5 py-0.5">检查结果示例</span>
+            <span className="rounded-sm bg-background-100 px-1.5 py-0.5">检查结果示例</span>
             演示样例 · 不代表真实输出
           </span>
         </div>

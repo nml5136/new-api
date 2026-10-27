@@ -312,7 +312,7 @@ export default function BillingPage() {
                     setAmount(Number(e.target.value) || 0);
                   }}
                   placeholder="输入其他金额"
-                  className="h-10 w-full rounded-xl border border-background-300 bg-background-50 pl-7 pr-3 text-sm text-foreground-900 focus:border-primary-400 focus:outline-none"
+                  className="h-10 w-full rounded-xl border border-background-300 bg-background-50 pl-7 pr-3 text-sm text-foreground-900 focus:border-primary-400 focus:outline-hidden"
                 />
               </div>
             </label>

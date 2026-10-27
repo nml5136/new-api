@@ -57,7 +57,7 @@ export default function PricingPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-background-50/12 bg-background-900/60 p-5 backdrop-blur">
+            <div className="rounded-2xl border border-background-50/12 bg-background-900/60 p-5 backdrop-blur-sm">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-xs font-medium text-background-50/80">用量估算器</p>
                 <span className="rounded-full bg-background-50/10 px-2 py-0.5 text-[10px] text-background-50/50">估算</span>
@@ -131,7 +131,7 @@ export default function PricingPage() {
                 onClick={() => setFilter(f.id)}
                 className={cx(
                   "cursor-pointer whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  filter === f.id ? "bg-background-50 text-foreground-950 shadow-sm" : "text-foreground-600 hover:text-foreground-900",
+                  filter === f.id ? "bg-background-50 text-foreground-950 shadow-xs" : "text-foreground-600 hover:text-foreground-900",
                 )}
               >
                 {f.label}

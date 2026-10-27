@@ -125,7 +125,7 @@ export default function RequestsPage() {
                 setPage(1);
               }}
               placeholder="输入请求号或任务名称"
-              className="h-9 w-full rounded-lg border border-background-300 bg-background-50 pl-8 pr-3 text-xs text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none"
+              className="h-9 w-full rounded-lg border border-background-300 bg-background-50 pl-8 pr-3 text-xs text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-hidden"
             />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -273,7 +273,7 @@ export default function RequestsPage() {
                   onClick={() => setTab(item.id)}
                   className={cx(
                     "cursor-pointer whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-medium transition-colors",
-                    tab === item.id ? "bg-background-50 text-foreground-950 shadow-sm" : "text-foreground-600 hover:text-foreground-900",
+                    tab === item.id ? "bg-background-50 text-foreground-950 shadow-xs" : "text-foreground-600 hover:text-foreground-900",
                   )}
                 >
                   {item.label}
@@ -401,7 +401,7 @@ export default function RequestsPage() {
                     { t: focused.time, label: "结算与核对", desc: focused.billing === "pending" ? "回执缺失，进入待核对，不计入余额。" : "净费用已结算，写入调用记录与账务。" },
                   ].map((event, i) => (
                     <li key={event.label} className="relative">
-                      <span className="absolute -left-[21px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-background-50 bg-primary-400" />
+                      <span className="absolute left-[-21px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-background-50 bg-primary-400" />
                       <p className="text-[11px] font-medium text-foreground-900">{event.label}</p>
                       <p className="mt-0.5 text-[10px] leading-relaxed text-foreground-500">{event.desc}</p>
                       <p className="mt-0.5 text-[9.5px] text-foreground-400">{event.t}</p>

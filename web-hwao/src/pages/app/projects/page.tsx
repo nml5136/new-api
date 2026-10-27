@@ -311,7 +311,7 @@ export default function ProjectsPage() {
             onChange={(e) => {
               if (project) updateProject(project.id, { status: e.target.value as "active" | "paused" });
             }}
-            className="h-10 w-full cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 text-sm text-foreground-900 focus:border-primary-400 focus:outline-none"
+            className="h-10 w-full cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 text-sm text-foreground-900 focus:border-primary-400 focus:outline-hidden"
           >
             <option value="active">启用</option>
             <option value="paused">暂停新请求</option>

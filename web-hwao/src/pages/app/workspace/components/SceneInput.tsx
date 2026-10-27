@@ -77,7 +77,7 @@ export default function SceneInput({ scene, prompt, onPrompt, options, onOption,
                 ? "粘贴会议记录、调研长文或客户反馈…"
                 : "粘贴合同、订单或线索文本…"
           }
-          className="w-full resize-y rounded-xl border border-background-200 bg-background-50 px-3.5 py-3 text-xs leading-[1.9] text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/10 disabled:bg-background-100"
+          className="w-full resize-y rounded-xl border border-background-200 bg-background-50 px-3.5 py-3 text-xs leading-[1.9] text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500/10 disabled:bg-background-100"
         />
         <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[10px] text-foreground-400">
           <span>{prompt.length} 字符 · 支持文本输入</span>
@@ -97,7 +97,7 @@ export default function SceneInput({ scene, prompt, onPrompt, options, onOption,
                     type="button"
                     aria-label={`移除 ${field.name}`}
                     onClick={() => setFields((prev) => prev.filter((_, i) => i !== index))}
-                    className="flex h-4 w-4 cursor-pointer items-center justify-center rounded text-foreground-400 hover:bg-background-200 hover:text-danger"
+                    className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm text-foreground-400 hover:bg-background-200 hover:text-danger"
                   >
                     <i className="ri-close-line text-[10px]" />
                   </button>
@@ -109,12 +109,12 @@ export default function SceneInput({ scene, prompt, onPrompt, options, onOption,
                 value={newField.name}
                 onChange={(e) => setNewField((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="新增字段名"
-                className="h-7 min-w-0 flex-1 rounded-md border border-background-200 px-2 text-[10px] focus:border-primary-400 focus:outline-none"
+                className="h-7 min-w-0 flex-1 rounded-md border border-background-200 px-2 text-[10px] focus:border-primary-400 focus:outline-hidden"
               />
               <select
                 value={newField.type}
                 onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value }))}
-                className="h-7 cursor-pointer rounded-md border border-background-200 px-1 text-[10px] text-foreground-700 focus:outline-none"
+                className="h-7 cursor-pointer rounded-md border border-background-200 px-1 text-[10px] text-foreground-700 focus:outline-hidden"
               >
                 {fieldTypes.map((t) => <option key={t}>{t}</option>)}
               </select>

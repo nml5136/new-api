@@ -104,7 +104,7 @@ export function Field({
 }
 
 const controlClass =
-  "w-full box-border rounded-xl border border-background-300 bg-background-50 px-3 py-2 text-sm text-foreground-900 placeholder:text-foreground-400 transition-colors focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/15";
+  "w-full box-border rounded-xl border border-background-300 bg-background-50 px-3 py-2 text-sm text-foreground-900 placeholder:text-foreground-400 transition-colors focus:border-primary-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500/15";
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cx(controlClass, "h-10", className)} {...rest} />;
@@ -112,7 +112,7 @@ export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputEleme
 
 export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={cx(controlClass, "h-10 cursor-pointer appearance-none bg-[right_0.75rem_center] pr-8", className)} {...rest}>
+    <select className={cx(controlClass, "h-10 cursor-pointer appearance-none bg-position-[right_0.75rem_center] pr-8", className)} {...rest}>
       {children}
     </select>
   );
@@ -150,7 +150,7 @@ export function Modal({
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background-950/45 p-0 backdrop-blur-xs sm:items-center sm:p-6">
       <button type="button" aria-label="关闭" className="absolute inset-0 cursor-default" onClick={onClose} />
       <div
         role="dialog"
@@ -209,7 +209,7 @@ export function Drawer({
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-background-950/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex justify-end bg-background-950/40 backdrop-blur-xs">
       <button type="button" aria-label="关闭抽屉" className="absolute inset-0 cursor-default" onClick={onClose} />
       <aside
         aria-modal="true"
@@ -294,7 +294,6 @@ export function Tabs<T extends string>({
 }: {
   items: Array<{ id: T; label: string; count?: number }>;
   value: T;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (id: any) => void;
   className?: string;
 }) {
@@ -308,7 +307,7 @@ export function Tabs<T extends string>({
           className={cx(
             "inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
             value === item.id
-              ? "bg-background-50 text-foreground-950 shadow-sm"
+              ? "bg-background-50 text-foreground-950 shadow-xs"
               : "text-foreground-600 hover:text-foreground-900",
           )}
         >

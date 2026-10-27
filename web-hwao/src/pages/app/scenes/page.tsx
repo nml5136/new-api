@@ -33,7 +33,7 @@ export default function ScenesPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="搜索场景或任务"
-              className="h-9 w-full rounded-lg border border-background-300 bg-background-50 pl-8 pr-3 text-xs text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none sm:w-[220px]"
+              className="h-9 w-full rounded-lg border border-background-300 bg-background-50 pl-8 pr-3 text-xs text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-hidden sm:w-[220px]"
             />
           </div>
         }

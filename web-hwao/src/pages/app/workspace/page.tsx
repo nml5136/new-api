@@ -319,7 +319,7 @@ export default function WorkspacePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               aria-label="任务名称"
-              className="min-w-0 max-w-[360px] flex-1 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-xl font-semibold text-foreground-950 transition-colors hover:border-background-300 focus:border-primary-400 focus:bg-background-50 focus:outline-none"
+              className="min-w-0 max-w-[360px] flex-1 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-xl font-semibold text-foreground-950 transition-colors hover:border-background-300 focus:border-primary-400 focus:bg-background-50 focus:outline-hidden"
             />
             <Badge tone="primary">{scenes.find((s) => s.id === scene)?.name}</Badge>
             <button
@@ -352,7 +352,7 @@ export default function WorkspacePage() {
                 onClick={() => setFocus(item.id)}
                 className={cx(
                   "inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1.5 text-[10.5px] font-medium transition-colors",
-                  focus === item.id ? "bg-background-50 text-foreground-950 shadow-sm" : "text-foreground-600 hover:text-foreground-900",
+                  focus === item.id ? "bg-background-50 text-foreground-950 shadow-xs" : "text-foreground-600 hover:text-foreground-900",
                 )}
               >
                 <i className={item.icon} />
@@ -397,7 +397,7 @@ export default function WorkspacePage() {
               title={option.hint}
               className={cx(
                 "cursor-pointer whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-medium transition-colors",
-                preference === option.id ? "bg-background-50 text-foreground-950 shadow-sm" : "text-foreground-600 hover:text-foreground-900",
+                preference === option.id ? "bg-background-50 text-foreground-950 shadow-xs" : "text-foreground-600 hover:text-foreground-900",
               )}
             >
               {option.label}
@@ -413,7 +413,7 @@ export default function WorkspacePage() {
             step={0.01}
             value={singleCap}
             onChange={(e) => updateBudget({ singleCap: Math.max(0.01, Number(e.target.value) || 0.01) })}
-            className="tnum h-8 w-[74px] rounded-lg border border-background-300 bg-background-50 px-2 text-[11px] text-foreground-900 focus:border-primary-400 focus:outline-none"
+            className="tnum h-8 w-[74px] rounded-lg border border-background-300 bg-background-50 px-2 text-[11px] text-foreground-900 focus:border-primary-400 focus:outline-hidden"
             aria-label="单次费用上限"
           />
         </div>

@@ -129,7 +129,7 @@ export default function RefundsPage() {
                   onChange={(e) => setNote(e.target.value)}
                   rows={3}
                   placeholder="描述问题与期望处理方式（可选）"
-                  className="w-full resize-y rounded-xl border border-background-300 bg-background-50 px-3 py-2 text-xs leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none"
+                  className="w-full resize-y rounded-xl border border-background-300 bg-background-50 px-3 py-2 text-xs leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-hidden"
                 />
               </Field>
 

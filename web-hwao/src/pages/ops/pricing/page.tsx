@@ -155,15 +155,15 @@ export default function OpsPricingPage() {
             <SectionTitle>生效与理由</SectionTitle>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="生效时间" hint="留空立即生效" error={errs.effective_at}><Input type="datetime-local" value={form.effective_at} min={tsToLocal(Math.floor(Date.now() / 1000))} onChange={(e) => set("effective_at", e.target.value)} /></Field>
-              <Field label="调价理由 *" error={errs.reason} className="sm:col-span-2"><Textarea rows={2} className="!min-h-[60px]" value={form.reason} onChange={(e) => set("reason", e.target.value)} placeholder="如：上游采购价下调，同步调整零售价" /></Field>
+              <Field label="调价理由 *" error={errs.reason} className="sm:col-span-2"><Textarea rows={2} className="min-h-[60px]!" value={form.reason} onChange={(e) => set("reason", e.target.value)} placeholder="如：上游采购价下调，同步调整零售价" /></Field>
             </div>
             {preview ? (
               <div className="rounded-xl border border-background-200 bg-background-100/50 p-3">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-foreground-600">
                   <span>影响预览：单次输入</span>
-                  <Input className="!h-8 !w-16 text-xs" value={inK} onChange={(e) => setInK(e.target.value)} />
+                  <Input className="h-8! w-16! text-xs" value={inK} onChange={(e) => setInK(e.target.value)} />
                   <span>K / 输出</span>
-                  <Input className="!h-8 !w-16 text-xs" value={outK} onChange={(e) => setOutK(e.target.value)} />
+                  <Input className="h-8! w-16! text-xs" value={outK} onChange={(e) => setOutK(e.target.value)} />
                   <span>K Token</span>
                 </div>
                 <div className="mt-2 grid grid-cols-3 gap-2 text-center">

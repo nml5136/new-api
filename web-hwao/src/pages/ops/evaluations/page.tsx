@@ -44,24 +44,24 @@ export default function OpsEvaluationsPage() {
       >
         <label className="block">
           <span className="mb-1.5 block text-[11px] font-medium text-foreground-700">备注（样本集名称）</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="h-10 w-full rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:border-primary-400 focus:outline-none" />
+          <input value={name} onChange={(e) => setName(e.target.value)} className="h-10 w-full rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:border-primary-400 focus:outline-hidden" />
         </label>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-medium text-foreground-700">场景</span>
-            <select value={scene} onChange={(e) => setScene(e.target.value)} className="h-10 w-full cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:outline-none">
+            <select value={scene} onChange={(e) => setScene(e.target.value)} className="h-10 w-full cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:outline-hidden">
               {raw.scenes.map((x: any) => <option key={x.scene.scene_id} value={x.scene.scene_id}>{x.scene.name}</option>)}
             </select>
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-medium text-foreground-700">样本数量</span>
-            <input type="number" value={samples} onChange={(e) => setSamples(e.target.value)} className="h-10 w-full rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:border-primary-400 focus:outline-none" />
+            <input type="number" value={samples} onChange={(e) => setSamples(e.target.value)} className="h-10 w-full rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:border-primary-400 focus:outline-hidden" />
           </label>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-medium text-foreground-700">模型</span>
-            <select value={model} onChange={(e) => setModel(e.target.value)} className="h-10 w-full cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:outline-none">
+            <select value={model} onChange={(e) => setModel(e.target.value)} className="h-10 w-full cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 text-sm focus:outline-hidden">
               <option value="">请选择</option>
               {raw.models.map((x: any) => <option key={x.model.id} value={x.model.model_name}>{x.model.model_name}</option>)}
             </select>

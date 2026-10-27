@@ -121,7 +121,7 @@ export default function DocsPage() {
             <section id="auth">
               <h2 className="font-heading text-xl font-semibold text-foreground-950">认证与密钥</h2>
               <p className="mt-2 text-xs leading-relaxed text-foreground-600">
-                使用 <code className="rounded bg-background-100 px-1 py-0.5 font-mono-ui text-[11px]">Authorization: Bearer &lt;平台密钥&gt;</code> 认证。
+                使用 <code className="rounded-sm bg-background-100 px-1 py-0.5 font-mono-ui text-[11px]">Authorization: Bearer &lt;平台密钥&gt;</code> 认证。
                 平台不接受上游厂商密钥，也不要求你填写任何 New API 管理员凭证。
               </p>
               <Notice className="mt-3" tone="warning" icon="ri-shield-keyhole-line">
@@ -132,7 +132,7 @@ export default function DocsPage() {
             <section id="scene">
               <h2 className="font-heading text-xl font-semibold text-foreground-950">按场景调用</h2>
               <p className="mt-2 text-xs leading-relaxed text-foreground-600">
-                <code className="rounded bg-background-100 px-1 py-0.5 font-mono-ui text-[11px]">model: "scene:commerce-copy"</code> 是平台扩展，
+                <code className="rounded-sm bg-background-100 px-1 py-0.5 font-mono-ui text-[11px]">model: "scene:commerce-copy"</code> 是平台扩展，
                 New API 原生不识别场景名。请求进入平台适配层后，才会映射为具体模型。
               </p>
               <div className="mt-3 overflow-hidden rounded-xl border border-background-200">

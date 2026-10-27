@@ -301,16 +301,16 @@ export default function ChatPage() {
 
       <section className="flex min-w-0 flex-1 flex-col">
         {/* 顶部：标题 + 模型 / 路由模式 */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-background-200 bg-background-50/90 px-4 py-2.5 backdrop-blur md:px-6">
+        <div className="flex flex-wrap items-center gap-2 border-b border-background-200 bg-background-50/90 px-4 py-2.5 backdrop-blur-sm md:px-6">
           <button type="button" className="rounded-lg p-1.5 text-foreground-600 hover:bg-background-100 lg:hidden" onClick={() => setMobileList(true)}><i className="ri-chat-history-line text-lg" /></button>
           <div className="mr-auto min-w-0">
             <div className="truncate font-heading text-[15px] font-semibold text-foreground-900">{cur ? plainTitle(cur.title) : "新对话"}</div>
             <div className="truncate text-[11px] text-foreground-500">{projName ? `项目：${projName}` : "未选择项目"}{cur?.session_id ? ` · 会话 ${cur.session_id.slice(-8)}` : ""}</div>
           </div>
-          <Select aria-label="路由模式" value={mode} onChange={(e) => changeRoute(model, e.target.value)} disabled={busy} className="!h-9 !w-[7.5rem] text-[13px]" title={MODES.find((m) => m.v === mode)?.hint}>
+          <Select aria-label="路由模式" value={mode} onChange={(e) => changeRoute(model, e.target.value)} disabled={busy} className="h-9! w-30! text-[13px]" title={MODES.find((m) => m.v === mode)?.hint}>
             {MODES.map((m) => <option key={m.v} value={m.v}>{m.label}</option>)}
           </Select>
-          <Select aria-label="模型" value={model} onChange={(e) => changeRoute(e.target.value, mode)} disabled={busy} className="!h-9 !w-[11.5rem] text-[13px]">
+          <Select aria-label="模型" value={model} onChange={(e) => changeRoute(e.target.value, mode)} disabled={busy} className="h-9! w-46! text-[13px]">
             {mode !== "scene" ? <option value="auto">自动选择（推荐）</option> : null}
             {mode !== "scene" ? <optgroup label="固定模型">{models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</optgroup> : null}
             {mode !== "fixed" ? <optgroup label="场景">{scenes.map((s) => <option key={s.id} value={`scene:${s.id}`}>{s.name}</option>)}</optgroup> : null}
@@ -338,7 +338,7 @@ export default function ChatPage() {
 
             {msgs.map((m, i) => m.role === "user" ? (
               <div key={m.id} className="group mb-6 flex flex-col items-end">
-                <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-primary-500 px-4 py-2.5 text-[14px] leading-7 text-background-50 shadow-soft">{m.content}</div>
+                <div className="max-w-[85%] whitespace-pre-wrap wrap-break-word rounded-2xl rounded-br-md bg-primary-500 px-4 py-2.5 text-[14px] leading-7 text-background-50 shadow-soft">{m.content}</div>
                 <CopyBtn text={m.content} className="mt-1 opacity-0 group-hover:opacity-100" />
               </div>
             ) : (
@@ -396,7 +396,7 @@ export default function ChatPage() {
             <div className="flex items-end gap-2 rounded-2xl border border-background-300 bg-background-50 p-2 shadow-soft focus-within:border-primary-400">
               <textarea ref={taRef} rows={1} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={onKey}
                 placeholder={pid ? "输入消息，Enter 发送，Shift + Enter 换行" : "请先在顶栏选择项目"}
-                className="max-h-[220px] min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-[14px] leading-6 text-foreground-900 outline-none placeholder:text-foreground-400 focus-visible:!outline-none" />
+                className="max-h-[220px] min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-[14px] leading-6 text-foreground-900 outline-hidden placeholder:text-foreground-400 focus-visible:outline-hidden!" />
               {busy ? (
                 <Button variant="outline" onClick={() => abortRef.current?.abort()} title="停止生成"><i className="ri-stop-fill" />停止</Button>
               ) : (

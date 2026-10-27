@@ -177,7 +177,7 @@ export default function ResultPanel({
                   <i className="ri-shield-check-line" />
                   质量检查
                 </p>
-                <span className="rounded bg-background-50 px-1.5 py-0.5 text-[9px] text-foreground-400">
+                <span className="rounded-sm bg-background-50 px-1.5 py-0.5 text-[9px] text-foreground-400">
                   {running ? "生成完成后逐项检查" : "示例检查结果 · 非真实自动验真"}
                 </span>
               </div>

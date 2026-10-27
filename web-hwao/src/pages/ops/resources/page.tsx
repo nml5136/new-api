@@ -394,7 +394,7 @@ function ChannelsTab({ models, confirm, onDone, onError }: { models: any[]; conf
             </div>
             <SectionTitle>模型</SectionTitle>
             <Field label="模型列表 *" hint="逗号分隔" error={errs.models}>
-              <Textarea rows={2} className="!min-h-[64px] font-mono-ui text-xs" value={form.models} onChange={(e) => set("models", e.target.value)} />
+              <Textarea rows={2} className="min-h-[64px]! font-mono-ui text-xs" value={form.models} onChange={(e) => set("models", e.target.value)} />
             </Field>
             <div className="flex flex-wrap gap-1">
               {models.map((m: any) => (
@@ -402,7 +402,7 @@ function ChannelsTab({ models, confirm, onDone, onError }: { models: any[]; conf
               ))}
             </div>
             <Field label="模型映射" hint="JSON，可选" error={errs.model_mapping}>
-              <Textarea rows={3} className="!min-h-[72px] font-mono-ui text-xs" value={form.model_mapping} onChange={(e) => set("model_mapping", e.target.value)} placeholder='{"对外模型名": "上游模型名"}' />
+              <Textarea rows={3} className="min-h-[72px]! font-mono-ui text-xs" value={form.model_mapping} onChange={(e) => set("model_mapping", e.target.value)} placeholder='{"对外模型名": "上游模型名"}' />
             </Field>
             <Field label="测试模型" hint="留空取模型列表第一个"><Input value={form.test_model} onChange={(e) => set("test_model", e.target.value)} /></Field>
             <SectionTitle>调度</SectionTitle>

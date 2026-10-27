@@ -1,5 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+// Tailwind v4 官方 Vite 插件（替代原 postcss + autoprefixer 配置）
+import tailwindcss from "@tailwindcss/vite";
 import { resolve } from "node:path";
 import AutoImport from "unplugin-auto-import/vite";
 // import { readdyJsxRuntimeProxyPlugin } from "./vite.jsx-runtime-proxy";
@@ -19,6 +21,7 @@ export default defineConfig({
   plugins: [
     // ...proxyPlugins,
     react(),
+    tailwindcss(),
     AutoImport({
       imports: [
         {

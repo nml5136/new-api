@@ -104,7 +104,7 @@ export default function OverviewPage() {
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
               placeholder={scene === "commerce-copy" ? "粘贴商品事实：名称、容量、材质、卖点、渠道与禁用词…" : scene === "office-summary" ? "粘贴需要压缩的长文或会议记录…" : "粘贴需要提取字段的原始文本…"}
-              className="w-full resize-none rounded-xl bg-transparent px-3.5 py-3 text-xs leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:outline-none"
+              className="w-full resize-none rounded-xl bg-transparent px-3.5 py-3 text-xs leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:outline-hidden"
             />
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-background-100 px-3 py-2">
               <button

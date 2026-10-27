@@ -233,7 +233,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 value={currentProject?.id}
                 onChange={(e) => setCurrentProject(e.target.value)}
                 aria-label="选择项目"
-                className="h-9 max-w-[180px] cursor-pointer appearance-none rounded-lg border border-background-200 bg-background-50 pl-2.5 pr-7 text-xs font-medium text-foreground-800 hover:border-background-300 focus:outline-none"
+                className="h-9 max-w-[180px] cursor-pointer appearance-none rounded-lg border border-background-200 bg-background-50 pl-2.5 pr-7 text-xs font-medium text-foreground-800 hover:border-background-300 focus:outline-hidden"
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -249,7 +249,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             >
               <i className="ri-search-line text-sm" />
               <span className="hidden sm:inline">搜索场景、项目或记录</span>
-              <span className="ml-auto hidden rounded border border-background-200 px-1.5 py-0.5 text-[10px] text-foreground-400 md:inline">⌘K</span>
+              <span className="ml-auto hidden rounded-sm border border-background-200 px-1.5 py-0.5 text-[10px] text-foreground-400 md:inline">⌘K</span>
             </button>
 
             <div className="ml-auto flex items-center gap-1.5 md:ml-0">
@@ -312,7 +312,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       {paletteOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-background-950/40 px-4 pt-[12vh] backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-background-950/40 px-4 pt-[12vh] backdrop-blur-xs"
           onClick={() => setPaletteOpen(false)}
         >
           <div
@@ -326,7 +326,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索场景、项目或记录…"
-                className="h-12 w-full bg-transparent text-sm text-foreground-900 placeholder:text-foreground-400 focus:outline-none"
+                className="h-12 w-full bg-transparent text-sm text-foreground-900 placeholder:text-foreground-400 focus:outline-hidden"
               />
               <button type="button" onClick={() => setPaletteOpen(false)} className="cursor-pointer text-[11px] text-foreground-400">ESC</button>
             </div>

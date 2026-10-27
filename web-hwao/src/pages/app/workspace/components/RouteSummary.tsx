@@ -39,7 +39,7 @@ export default function RouteSummary({
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-foreground-900">
             {model.name}
-            <span className="rounded bg-background-100 px-1.5 py-0.5 text-[9px] font-normal text-foreground-500">{prefLabel[preference]}</span>
+            <span className="rounded-sm bg-background-100 px-1.5 py-0.5 text-[9px] font-normal text-foreground-500">{prefLabel[preference]}</span>
           </p>
           <p className="mt-0.5 truncate text-[10px] text-foreground-500">
             能力符合 · 场景评测达标 · 预算可容纳

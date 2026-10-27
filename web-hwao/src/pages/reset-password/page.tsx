@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
       </div>
 
       <div className="relative z-10 my-auto flex w-full justify-center py-10">
-        <div className="w-full max-w-[420px] rounded-2xl border border-background-50/12 bg-background-900/70 p-6 backdrop-blur md:p-7">
+        <div className="w-full max-w-[420px] rounded-2xl border border-background-50/12 bg-background-900/70 p-6 backdrop-blur-sm md:p-7">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/15 text-primary-300">
             <i className="ri-lock-password-line text-lg" />
           </span>

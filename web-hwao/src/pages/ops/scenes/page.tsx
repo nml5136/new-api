@@ -126,7 +126,7 @@ export default function OpsScenesPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[280px_1fr]">
         <Card className="h-fit overflow-hidden">
           <div className="space-y-2 border-b border-background-200 p-3">
-            <Input value={t.q} onChange={(e) => t.setQ(e.target.value)} placeholder="搜索场景 ID / 名称" className="!h-9 text-xs" />
+            <Input value={t.q} onChange={(e) => t.setQ(e.target.value)} placeholder="搜索场景 ID / 名称" className="h-9! text-xs" />
             <FilterSelect label="状态" value={status} onChange={setStatus} options={Object.entries(vStatus).map(([k, v]) => [k, v[0]])} />
           </div>
           <div className="max-h-[560px] space-y-1 overflow-y-auto p-2">
@@ -214,7 +214,7 @@ export default function OpsScenesPage() {
                   {cur?.versions.map((v: any) => <option key={v.id} value={v.id}>v{v.version} · {vStatus[v.status]?.[0]}</option>)}
                 </Select>
               </Field>
-            ) : <Field label="描述"><Textarea rows={2} className="!min-h-[60px]" value={sceneForm.description} onChange={(e) => setSceneForm({ ...sceneForm, description: e.target.value })} /></Field>}
+            ) : <Field label="描述"><Textarea rows={2} className="min-h-[60px]!" value={sceneForm.description} onChange={(e) => setSceneForm({ ...sceneForm, description: e.target.value })} /></Field>}
             {sceneErr ? <p className="text-[11px] text-danger">{sceneErr}</p> : null}
           </div>
         ) : null}
@@ -233,8 +233,8 @@ export default function OpsScenesPage() {
           <div className="space-y-4">
             <SectionTitle>输入与输出</SectionTitle>
             <Field label="适用范围" hint="说明适用的业务、语言或内容类型"><Input value={vForm.scope} onChange={(e) => vset("scope", e.target.value)} /></Field>
-            <Field label="输入模板" hint="字段说明或 JSON 模板"><Textarea rows={3} className="!min-h-[72px] font-mono-ui text-xs" value={vForm.input_template} onChange={(e) => vset("input_template", e.target.value)} /></Field>
-            <Field label="场景系统提示"><Textarea rows={3} className="!min-h-[72px]" value={vForm.system_prompt} onChange={(e) => vset("system_prompt", e.target.value)} /></Field>
+            <Field label="输入模板" hint="字段说明或 JSON 模板"><Textarea rows={3} className="min-h-[72px]! font-mono-ui text-xs" value={vForm.input_template} onChange={(e) => vset("input_template", e.target.value)} /></Field>
+            <Field label="场景系统提示"><Textarea rows={3} className="min-h-[72px]!" value={vForm.system_prompt} onChange={(e) => vset("system_prompt", e.target.value)} /></Field>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="输出格式"><Select value={vForm.output_format} onChange={(e) => vset("output_format", e.target.value)}><option value="text">文本</option><option value="json">JSON 结构化</option></Select></Field>
               <Field label="默认偏好"><Select value={vForm.preference} onChange={(e) => vset("preference", e.target.value)}><option value="economy">经济</option><option value="balanced">均衡</option><option value="quality">质量优先</option></Select></Field>
@@ -268,7 +268,7 @@ export default function OpsScenesPage() {
               })}
             </div>
             <div className="flex gap-2">
-              <Select value={pick} onChange={(e) => setPick(e.target.value)} className="!w-auto flex-1">
+              <Select value={pick} onChange={(e) => setPick(e.target.value)} className="w-auto! flex-1">
                 <option value="">选择要加入的模型…</option>
                 {opsModels.filter((m: any) => !cands.includes(m.model_name)).map((m: any) => <option key={m.id} value={m.model_name}>{m.model_name}（质量 {m.quality_level}{m.status === "on_sale" ? "" : "，不可售"}）</option>)}
               </Select>
@@ -291,7 +291,7 @@ export default function OpsScenesPage() {
         }}>确认发布</Button></>}
       >
         {publishV?.rollout_tenants ? <Notice tone="primary" className="mb-3">此版本设置了小范围放量，仅 {publishV.rollout_tenants.split(",").map((x: string) => tenantName(Number(x))).join("、")} 使用；其他企业继续使用上一发布版本。</Notice> : null}
-        <Field label="发布说明 *"><Textarea rows={2} className="!min-h-[60px]" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="写入审计记录" /></Field>
+        <Field label="发布说明 *"><Textarea rows={2} className="min-h-[60px]!" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="写入审计记录" /></Field>
       </Modal>
 
       {/* 放量 */}

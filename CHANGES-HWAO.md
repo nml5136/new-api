@@ -55,3 +55,9 @@
 - web-hwao/src/pages/ops/scenes：场景新建/编辑/克隆/删除、版本草稿抽屉（候选排序）、评测通过、发布、回滚、停用/启用、租户放量。
 - web-hwao/src/pages/ops/customers：企业搜索/筛选/分页、编辑预算与并发、邀请码作废。
 - web-hwao/src/pages/ops/finance：登记线下充值（待确认到账后入账）。
+
+## 前端 Tailwind CSS v3 → v4 升级（仅 web-hwao，未触及 New API 上游文件）
+- 依赖：tailwindcss 3.4.19 → 4.x，新增 `@tailwindcss/vite`，移除 `postcss`、`autoprefixer`；删除 `tailwind.config.ts`、`postcss.config.ts`。
+- `vite.config.ts` 接入 `@tailwindcss/vite` 插件；`src/index.css` 改为 `@import 'tailwindcss'`，主题迁移到 `@theme`（oklch 色阶变量保留，透明度修饰符可用）。
+- 兼容 v3 默认值：边框默认色 gray-200、placeholder 颜色 gray-400、按钮 cursor:pointer；`ring`→`ring-3`、`shadow`/`rounded`/`outline-none` 等类名由官方升级工具批量改写。
+- 浏览器要求随 v4 提升至 Chrome 111 / Safari 16.4 / Firefox 128 及以上。

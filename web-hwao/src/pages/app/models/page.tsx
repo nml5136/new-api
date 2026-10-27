@@ -65,7 +65,7 @@ export default function ModelsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="搜索模型名称或能力标签"
-              className="h-9 w-full rounded-lg border border-background-300 bg-background-50 pl-8 pr-3 text-xs text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none"
+              className="h-9 w-full rounded-lg border border-background-300 bg-background-50 pl-8 pr-3 text-xs text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-hidden"
             />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -152,7 +152,7 @@ export default function ModelsPage() {
       </p>
 
       {compare.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-background-200 bg-background-50/95 px-4 py-3 backdrop-blur md:px-6">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-background-200 bg-background-50/95 px-4 py-3 backdrop-blur-sm md:px-6">
           <div className="mx-auto flex w-full max-w-shell flex-wrap items-center gap-3">
             <span className="text-[11px] text-foreground-600">已选 {compare.length} / 3</span>
             <div className="flex flex-wrap gap-1.5">

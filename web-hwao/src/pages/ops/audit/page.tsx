@@ -90,7 +90,7 @@ export default function OpsAuditPage() {
                   { label: "当前状态", desc: alert.status, time: "—" },
                 ].map((event) => (
                   <li key={event.label} className="relative">
-                    <span className="absolute -left-[19px] top-1 h-2 w-2 rounded-full border-2 border-background-50 bg-primary-400" />
+                    <span className="absolute left-[-19px] top-1 h-2 w-2 rounded-full border-2 border-background-50 bg-primary-400" />
                     <p className="text-[10.5px] font-medium text-foreground-900">{event.label}</p>
                     <p className="text-[9.5px] text-foreground-500">{event.desc} · {event.time}</p>
                   </li>

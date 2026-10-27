@@ -33,7 +33,7 @@ export function Toolbar({ q, setQ, placeholder = "搜索…", filters, actions }
       <div className="flex flex-1 flex-wrap items-center gap-2">
         <div className="relative w-full md:w-64">
           <i className="ri-search-line pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-foreground-400" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} className="!h-9 pl-8 text-xs" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} className="h-9! pl-8 text-xs" />
         </div>
         {filters}
       </div>
@@ -49,7 +49,7 @@ export function FilterSelect({ value, onChange, options, label }: { value: strin
       aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-9 cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 pr-7 text-xs text-foreground-800 focus:border-primary-400 focus:outline-none"
+      className="h-9 cursor-pointer rounded-xl border border-background-300 bg-background-50 px-3 pr-7 text-xs text-foreground-800 focus:border-primary-400 focus:outline-hidden"
     >
       <option value="">{label}：全部</option>
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -159,7 +159,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       <span>{label}</span>
       <span className={cx("relative h-5 w-9 rounded-full transition-colors", checked ? "bg-primary-500" : "bg-background-300")}>
         <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-        <span className={cx("absolute top-0.5 h-4 w-4 rounded-full bg-background-50 shadow transition-all", checked ? "left-[18px]" : "left-0.5")} />
+        <span className={cx("absolute top-0.5 h-4 w-4 rounded-full bg-background-50 shadow-sm transition-all", checked ? "left-[18px]" : "left-0.5")} />
       </span>
     </label>
   );
