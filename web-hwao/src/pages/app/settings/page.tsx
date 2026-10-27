@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Badge, Button, Card, Field, Input, Modal, Notice, PageHeader, Select } from "@/components/base/ui";
+// 企业与个人设置：一律复用 New API 原生能力（用户资料、会话、2FA/Passkey、密码、通知），不另建后端。
+// New API 没有的能力（企业资料编辑、手机号、历史保存策略等）只读展示并标注，待产品决策。
+import { useEffect, useState } from "react";
+import { Badge, Button, Field, Input, Notice, PageHeader } from "@/components/base/ui";
+import { ApiError, del, get, post, put, ts2str } from "@/lib/api";
 import { cx } from "@/lib/format";
 
 const sections = [
@@ -10,307 +12,173 @@ const sections = [
   { id: "notify", label: "通知", icon: "ri-notification-3-line" },
   { id: "history", label: "历史与数据", icon: "ri-database-2-line" },
 ] as const;
-
 type SectionId = (typeof sections)[number]["id"];
+
+type SessionView = { sid: string; current: boolean; login_method: string; ip: string; user_agent: string; last_active_at: number };
+
+// New API 原生控制台页面（同一登录会话，刷新 Cookie 共享）
+const NATIVE = { profile: "/profile", security: "/security" };
+
+function NativeLink({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <a href={to} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-primary-600 hover:underline">
+      {children} <i className="ri-external-link-line" />
+    </a>
+  );
+}
+
+const errMsg = (e: unknown) => (e instanceof ApiError ? e.message : "操作失败，请稍后重试");
 
 export default function SettingsPage() {
   const [section, setSection] = useState<SectionId>("company");
   const [notice, setNotice] = useState("");
-  const [company, setCompany] = useState("星澜科技");
-  const [contact, setContact] = useState("linchen@xinglan.cn");
-  const [name, setName] = useState("林晨");
-  const [phone, setPhone] = useState("138****2049");
-  const [oldPwd, setOldPwd] = useState("");
-  const [newPwd, setNewPwd] = useState("");
-  const [sessionList, setSessionList] = useState([
-    { id: "s1", device: "macOS · Chrome", location: "上海", time: "当前会话", current: true },
-    { id: "s2", device: "iOS · Safari", location: "上海", time: "2 小时前", current: false },
-    { id: "s3", device: "Windows · Edge", location: "杭州", time: "昨天 21:40", current: false },
-  ]);
-  const [mfa, setMfa] = useState(true);
-  const [retention, setRetention] = useState("30");
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [notify, setNotify] = useState({ budget: true, bill: true, task: false, email: true, inapp: true });
+  const [me, setMe] = useState<any>(null);
+  const [self, setSelf] = useState<any>(null);
+  const [displayName, setDisplayName] = useState("");
+  const [sessions, setSessions] = useState<SessionView[]>([]);
+  const [twoFA, setTwoFA] = useState<boolean | null>(null);
+  const [passkey, setPasskey] = useState<boolean | null>(null);
 
   const save = (text: string) => {
     setNotice(text);
     window.setTimeout(() => setNotice(""), 3200);
   };
 
+  const loadSessions = () => get<SessionView[]>("/api/user/sessions").then((s) => setSessions(s || [])).catch(() => setSessions([]));
+
+  useEffect(() => {
+    get("/platform/me").then(setMe).catch(() => null);
+    get("/api/user/self").then((u) => { setSelf(u); setDisplayName(u?.display_name || ""); }).catch(() => null);
+    get<any>("/api/user/2fa/status").then((d) => setTwoFA(!!d?.enabled)).catch(() => setTwoFA(null));
+    get<any>("/api/user/passkey").then((d) => setPasskey(!!d?.enabled)).catch(() => setPasskey(null));
+    loadSessions();
+  }, []);
+
+  // 通知设置来自 New API 用户 setting（额度预警）
+  const setting = (() => {
+    try { return typeof self?.setting === "string" ? JSON.parse(self.setting || "{}") : self?.setting || {}; } catch { return {}; }
+  })();
+
   return (
     <div>
-      <PageHeader
-        eyebrow="设置"
-        title="企业与个人设置"
-        description="安全、通知与历史保存策略集中在此。"
-      />
-
+      <PageHeader title="企业与个人设置" description="账号安全、会话与通知复用 New API 账号体系。" />
       {notice ? <Notice tone="success" icon="ri-check-line" className="mb-3">{notice}</Notice> : null}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[210px_1fr]">
-        <Card className="h-fit p-1.5">
-          <div className="flex gap-1 overflow-x-auto lg:flex-col scroll-thin">
-            {sections.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSection(item.id)}
-                className={cx(
-                  "flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-[11.5px] transition-colors",
-                  section === item.id ? "bg-primary-50 font-medium text-primary-700" : "text-foreground-600 hover:bg-background-100",
-                )}
-              >
-                <i className={cx(item.icon, "text-sm")} />
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="min-w-0 p-5 md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto md:w-40 md:flex-col">
+          {sections.map((item) => (
+            <button key={item.id} type="button" onClick={() => setSection(item.id)}
+              className={cx("flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-[11.5px] transition-colors",
+                section === item.id ? "bg-primary-50 text-primary-700" : "text-foreground-600 hover:bg-background-100")}>
+              <i className={item.icon} />{item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="min-w-0 flex-1 rounded-xl border border-background-200 p-5">
           {section === "company" ? (
-            <div className="max-w-[560px]">
+            <div className="max-w-[640px]">
               <h2 className="text-sm font-semibold text-foreground-950">企业资料</h2>
-              <p className="mt-1 text-[11px] text-foreground-600">企业名称会显示在账单与发票抬头建议中。</p>
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="企业名称"><Input value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
-                <Field label="企业编号" hint="只读"><Input value="ENT-2026-0417" readOnly className="bg-background-100 text-foreground-500" /></Field>
-                <Field label="管理员邮箱"><Input value={contact} onChange={(e) => setContact(e.target.value)} /></Field>
-                <Field label="默认币种"><Select defaultValue="CNY"><option value="CNY">人民币 CNY</option></Select></Field>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="企业名称" hint="只读"><Input value={me?.tenant?.name || ""} readOnly className="bg-background-100" /></Field>
+                <Field label="开通编号" hint="只读"><Input value={me?.tenant?.provision_no || ""} readOnly className="bg-background-100" /></Field>
+                <Field label="我的角色" hint="只读"><Input value={me?.role || ""} readOnly className="bg-background-100" /></Field>
+                <Field label="结算币种" hint="只读"><Input value="人民币 CNY" readOnly className="bg-background-100" /></Field>
               </div>
-              <div className="mt-5 flex items-center gap-2">
-                <Button onClick={() => save("企业资料已保存（一期仅保存在本页）")}>保存资料</Button>
-                <span className="text-[10px] text-foreground-400">一期未接入后端，刷新后不保留</span>
-              </div>
+              <Notice tone="neutral" icon="ri-information-line" className="mt-4">企业资料由平台运营维护，如需修改请联系运营。</Notice>
             </div>
           ) : null}
 
           {section === "profile" ? (
-            <div className="max-w-[560px]">
+            <div className="max-w-[640px]">
               <h2 className="text-sm font-semibold text-foreground-950">个人资料</h2>
-              <p className="mt-1 text-[11px] text-foreground-600">当前账号为企业管理员，可查看全部项目与密钥列表。</p>
-              <div className="mt-5 flex items-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary-800 text-sm font-medium text-background-50">林</span>
-                <div>
-                  <p className="text-[12px] font-medium text-foreground-900">{name}</p>
-                  <p className="text-[10px] text-foreground-500">企业管理员 · 星澜科技</p>
-                </div>
-                <Badge tone="primary" className="ml-auto">默认头像</Badge>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="平台用户名" hint="只读"><Input value={self?.username || ""} readOnly className="bg-background-100" /></Field>
+                <Field label="显示名称"><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} /></Field>
+                <Field label="邮箱" hint="在 New API 个人中心绑定"><Input value={self?.email || "未绑定"} readOnly className="bg-background-100" /></Field>
               </div>
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="姓名"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
-                <Field label="手机号"><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
-              </div>
-              <div className="mt-5">
-                <Button onClick={() => save("个人资料已保存（一期仅保存在本页）")}>保存资料</Button>
+              <div className="mt-4 flex items-center gap-3">
+                <Button onClick={async () => {
+                  try {
+                    // 复用 New API PUT /api/user/self 更新显示名称
+                    await put("/api/user/self", { username: self?.username, display_name: displayName.trim() });
+                    save("个人资料已保存");
+                  } catch (e) { save(errMsg(e)); }
+                }}>保存资料</Button>
+                <NativeLink to={NATIVE.profile}>邮箱 / 第三方账号绑定</NativeLink>
               </div>
             </div>
           ) : null}
 
           {section === "security" ? (
-            <div className="max-w-[640px]">
+            <div className="max-w-[640px] space-y-3">
               <h2 className="text-sm font-semibold text-foreground-950">安全</h2>
-              <p className="mt-1 text-[11px] text-foreground-600">一期请在登录页使用“忘记密码”或联系管理员修改密码。</p>
-
-              <div className="mt-5 rounded-xl border border-background-200 p-4">
-                <p className="text-[11.5px] font-medium text-foreground-900">修改密码</p>
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="当前密码"><Input type="password" value={oldPwd} onChange={(e) => setOldPwd(e.target.value)} placeholder="••••••••" /></Field>
-                  <Field label="新密码" hint="至少 8 位"><Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="••••••••" /></Field>
-                </div>
-                <Button
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => {
-                    if (newPwd.length < 8) {
-                      save("新密码至少 8 位，请重新输入。");
-                      return;
-                    }
-                    setOldPwd("");
-                    setNewPwd("");
-                    save("密码已更新（一期仅保存在本页）。其他会话将需要重新登录。");
-                  }}
-                >
-                  更新密码
-                </Button>
+              <div className="flex items-center justify-between rounded-xl border border-background-200 p-4">
+                <div><p className="text-[11.5px] font-medium">登录密码</p><p className="text-[10px] text-foreground-500">修改需二次身份校验，在 New API 安全中心完成。</p></div>
+                <NativeLink to={NATIVE.security}>修改密码</NativeLink>
               </div>
-
-              <div className="mt-3 rounded-xl border border-background-200 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11.5px] font-medium text-foreground-900">敏感操作二次验证</p>
-                    <p className="mt-0.5 text-[10px] text-foreground-500">撤销密钥、修改预算与退款申请需要二次确认。</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setMfa((v) => !v)}
-                    aria-label="切换二次验证"
-                    className={cx("relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors", mfa ? "bg-primary-500" : "bg-background-300")}
-                  >
-                    <span className={cx("absolute top-0.5 h-4 w-4 rounded-full bg-background-50 transition-all", mfa ? "left-[18px]" : "left-0.5")} />
-                  </button>
+              <div className="flex items-center justify-between rounded-xl border border-background-200 p-4">
+                <div>
+                  <p className="text-[11.5px] font-medium">两步验证（TOTP） / Passkey</p>
+                  <p className="mt-1 flex gap-2 text-[10px]">
+                    <Badge tone={twoFA ? "success" : "neutral"}>2FA {twoFA == null ? "—" : twoFA ? "已开启" : "未开启"}</Badge>
+                    <Badge tone={passkey ? "success" : "neutral"}>Passkey {passkey == null ? "—" : passkey ? "已绑定" : "未绑定"}</Badge>
+                  </p>
                 </div>
+                <NativeLink to={NATIVE.security}>去设置</NativeLink>
               </div>
-
-              <div className="mt-3 rounded-xl border border-background-200 p-4">
+              <div className="flex items-center justify-between rounded-xl border border-background-200 p-4">
+                <div><p className="text-[11.5px] font-medium">个人访问令牌</p><p className="text-[10px] text-foreground-500">用于调用 New API 管理接口；调用模型请使用“项目密钥”。</p></div>
+                <NativeLink to={NATIVE.security}>管理</NativeLink>
+              </div>
+              <div className="rounded-xl border border-background-200 p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11.5px] font-medium text-foreground-900">登录会话</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSessionList((prev) => prev.filter((s) => s.current));
-                      save("已撤销其他所有会话（一期仅保存在本页）。");
-                    }}
-                    className="cursor-pointer text-[10.5px] text-danger hover:underline"
-                  >
-                    撤销其他会话
-                  </button>
+                  <p className="text-[11.5px] font-medium">登录会话</p>
+                  <button type="button" className="cursor-pointer text-[10.5px] text-danger hover:underline" onClick={async () => {
+                    try { await post("/api/user/sessions/revoke-others"); save("已撤销其他所有会话"); loadSessions(); } catch (e) { save(errMsg(e)); }
+                  }}>撤销其他会话</button>
                 </div>
                 <div className="mt-2 divide-y divide-background-100">
-                  {sessionList.map((s) => (
-                    <div key={s.id} className="flex items-center justify-between gap-2 py-2">
-                      <div>
-                        <p className="text-[10.5px] text-foreground-800">{s.device}</p>
-                        <p className="text-[9.5px] text-foreground-400">{s.location} · {s.time}</p>
+                  {sessions.length === 0 ? <p className="py-2 text-[10.5px] text-foreground-400">暂无会话数据</p> : null}
+                  {sessions.map((s) => (
+                    <div key={s.sid} className="flex items-center justify-between gap-2 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-[10.5px] text-foreground-800">{s.user_agent || s.login_method}</p>
+                        <p className="text-[9.5px] text-foreground-400">{s.ip} · {ts2str(s.last_active_at)}</p>
                       </div>
-                      {s.current ? (
-                        <Badge tone="success">当前</Badge>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSessionList((prev) => prev.filter((x) => x.id !== s.id));
-                            save("该会话已撤销（一期仅保存在本页）。");
-                          }}
-                          className="cursor-pointer text-[10px] text-foreground-500 hover:text-danger"
-                        >
-                          撤销
-                        </button>
+                      {s.current ? <Badge tone="success">当前</Badge> : (
+                        <button type="button" className="cursor-pointer text-[10px] text-foreground-500 hover:text-danger" onClick={async () => {
+                          try { await del(`/api/user/sessions/${encodeURIComponent(s.sid)}`); save("该会话已撤销"); loadSessions(); } catch (e) { save(errMsg(e)); }
+                        }}>撤销</button>
                       )}
                     </div>
                   ))}
                 </div>
               </div>
-
-              <Notice tone="neutral" icon="ri-lock-line" className="mt-3">
-                上游网关地址与管理密钥由平台统一管理，客户侧无需配置。
-              </Notice>
+              <Notice tone="neutral" icon="ri-lock-line">项目密钥的来源 IP 白名单在“密钥”页设置，网关与 New API 令牌（allow_ips）双重校验。</Notice>
             </div>
           ) : null}
 
           {section === "notify" ? (
-            <div className="max-w-[560px]">
+            <div className="max-w-[640px]">
               <h2 className="text-sm font-semibold text-foreground-950">通知</h2>
-              <p className="mt-1 text-[11px] text-foreground-600">选择需要接收的通知类型与方式，一期不发送消息通知。</p>
-              <div className="mt-5 space-y-2">
-                {[
-                  { key: "budget" as const, label: "预算预警", desc: "达到 80% / 95% 阈值时提醒" },
-                  { key: "bill" as const, label: "账单异常", desc: "支付回调延迟、费用待核对" },
-                  { key: "task" as const, label: "任务中断", desc: "流式中断或执行失败" },
-                ].map((item) => (
-                  <div key={item.key} className="flex items-center justify-between gap-3 rounded-xl border border-background-200 px-3.5 py-3">
-                    <div>
-                      <p className="text-[11.5px] font-medium text-foreground-900">{item.label}</p>
-                      <p className="mt-0.5 text-[10px] text-foreground-500">{item.desc}</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={notify[item.key]}
-                      onChange={(e) => setNotify((prev) => ({ ...prev, [item.key]: e.target.checked }))}
-                      className="h-4 w-4 cursor-pointer"
-                      style={{ accentColor: "oklch(var(--primary-500))" }}
-                    />
-                  </div>
-                ))}
+              <p className="mt-1 text-[11px] text-foreground-600">通知复用 New API 的额度预警（邮件 / Webhook / Bark / Gotify），在 New API 个人中心配置。</p>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="额度预警"><Input readOnly className="bg-background-100" value={setting.quota_warning_enabled === false ? "未开启" : "已开启"} /></Field>
+                <Field label="通知方式"><Input readOnly className="bg-background-100" value={setting.notify_type || "email"} /></Field>
               </div>
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-background-200 px-3 py-2.5 text-[11px] text-foreground-700">
-                  <input type="checkbox" checked={notify.email} onChange={(e) => setNotify((prev) => ({ ...prev, email: e.target.checked }))} className="h-3.5 w-3.5 cursor-pointer" style={{ accentColor: "oklch(var(--primary-500))" }} />
-                  邮件通知
-                </label>
-                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-background-200 px-3 py-2.5 text-[11px] text-foreground-700">
-                  <input type="checkbox" checked={notify.inapp} onChange={(e) => setNotify((prev) => ({ ...prev, inapp: e.target.checked }))} className="h-3.5 w-3.5 cursor-pointer" style={{ accentColor: "oklch(var(--primary-500))" }} />
-                  站内通知
-                </label>
-              </div>
-              <Button className="mt-4" onClick={() => save("通知设置已保存（一期仅保存在本页）")}>保存通知设置</Button>
+              <div className="mt-4"><NativeLink to={NATIVE.profile}>修改通知设置</NativeLink></div>
             </div>
           ) : null}
 
           {section === "history" ? (
-            <div className="max-w-[620px]">
+            <div className="max-w-[640px]">
               <h2 className="text-sm font-semibold text-foreground-950">历史与数据</h2>
-              <p className="mt-1 text-[11px] text-foreground-600">说明网页正文保存策略。API 默认不长期保存正文，以下设置一期仅为界面占位。</p>
-
-              <div className="mt-5 space-y-2">
-                {[
-                  { id: "7", label: "保存 7 天", desc: "适合对内容留存敏感的企业" },
-                  { id: "30", label: "保存 30 天", desc: "默认，可在记录中查看任务内容" },
-                  { id: "0", label: "不保存正文", desc: "仅保留用量、费用与状态" },
-                ].map((item) => (
-                  <label
-                    key={item.id}
-                    className={cx(
-                      "flex cursor-pointer items-start gap-2.5 rounded-xl border px-3.5 py-3 transition-colors",
-                      retention === item.id ? "border-primary-300 bg-primary-50/40" : "border-background-200",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="retention"
-                      checked={retention === item.id}
-                      onChange={() => setRetention(item.id)}
-                      className="mt-0.5 h-3.5 w-3.5 cursor-pointer"
-                      style={{ accentColor: "oklch(var(--primary-500))" }}
-                    />
-                    <span>
-                      <span className="block text-[11.5px] font-medium text-foreground-900">{item.label}</span>
-                      <span className="mt-0.5 block text-[10px] text-foreground-500">{item.desc}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Button onClick={() => save(`历史保存策略已更新为${retention === "0" ? "不保存正文" : `保存 ${retention} 天`}（一期仅保存在本页）`)}>保存策略</Button>
-                <Button variant="danger" onClick={() => setDeleteOpen(true)}>删除历史正文</Button>
-              </div>
-
-              <Notice tone="neutral" icon="ri-information-line" className="mt-4">
-                删除历史正文不会删除依法或依约需保留的账务、退款与安全审计记录。删除操作会记录在审计日志中。
+              <Notice tone="neutral" icon="ri-information-line" className="mt-3">
+                调用记录保存策略按平台统一配置执行（New API 日志清理由运营在后台设置），一期暂不支持企业自定义保存天数或自助删除正文。
               </Notice>
-              <p className="mt-3 text-[10px] text-foreground-400">
-                需要查看接口侧的保存说明？参见 <Link to="/docs" className="text-primary-600">开发文档</Link>。
-              </p>
             </div>
           ) : null}
-        </Card>
-      </div>
-
-      <Modal
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        title="删除历史正文"
-        description="此操作不可撤销，但不会影响账务与审计记录。"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>取消</Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                setDeleteOpen(false);
-                save("历史正文删除任务已提交（一期仅保存在本页）。账务与审计记录保留。");
-              }}
-            >
-              确认删除
-            </Button>
-          </>
-        }
-      >
-        <div className="rounded-xl bg-background-100/70 p-3.5 text-[11px] leading-relaxed text-foreground-700">
-          将删除当前企业所有超出保存策略的任务正文。调用记录、费用、退款与安全审计记录会继续保留，用于对账与合规。
         </div>
-      </Modal>
+      </div>
     </div>
   );
 }

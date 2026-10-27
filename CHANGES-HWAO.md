@@ -14,3 +14,6 @@
 - web-hwao/src/lib/api.ts：适配上游 scoped access token（Bearer，仅存内存），401 时用 HttpOnly 刷新 Cookie 调 /api/user/auth/refresh 重试，登出走 /api/user/auth/logout。
 - hwao/hapi/ops.go：告警处置写审计；hwao/hapi/portal.go + hservice/tenant.go：新增项目成员追加接口。
 - router（上游文件）：新增 POST /platform/projects/:id/members。
+
+## 2026-10-27 设置页复用 New API 原生能力
+- web-hwao/src/pages/app/settings/page.tsx：个人资料（PUT /api/user/self）、登录会话（/api/user/sessions*）、2FA/Passkey 状态读取接 New API 原生接口；修改密码、2FA、访问令牌、通知设置跳转 New API 原生页面（/security、/profile）；企业资料只读；无后端新增，无上游文件改动。
