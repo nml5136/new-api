@@ -21,6 +21,8 @@ import KeysPage from "@/pages/app/keys/page";
 import BudgetsPage from "@/pages/app/budgets/page";
 import RequestsPage from "@/pages/app/requests/page";
 import BillingPage from "@/pages/app/billing/page";
+import WalletPage from "@/pages/app/wallet/page";
+import OpsPaymentsPage from "@/pages/ops/payments/page";
 import RefundsPage from "@/pages/app/refunds/page";
 import MembersPage from "@/pages/app/members/page";
 import SettingsPage from "@/pages/app/settings/page";
@@ -64,6 +66,7 @@ const routes: RouteObject[] = [
       { path: "budgets", element: <BudgetsPage /> },
       { path: "requests", element: <RequestsPage /> },
       { path: "billing", element: <BillingPage /> },
+      { path: "wallet", element: <WalletPage /> },
       { path: "refunds", element: <RefundsPage /> },
       { path: "members", element: <MembersPage /> },
       { path: "settings", element: <SettingsPage /> },
@@ -87,6 +90,7 @@ const routes: RouteObject[] = [
       { path: "customers", element: <OpsCustomersPage /> },
       { path: "pricing", element: <OpsPricingPage /> },
       { path: "finance", element: <OpsFinancePage /> },
+      { path: "payments", element: <OpsPaymentsPage /> },
       { path: "audit", element: <OpsAuditPage /> },
     ],
   },

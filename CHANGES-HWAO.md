@@ -61,3 +61,11 @@
 - `vite.config.ts` 接入 `@tailwindcss/vite` 插件；`src/index.css` 改为 `@import 'tailwindcss'`，主题迁移到 `@theme`（oklch 色阶变量保留，透明度修饰符可用）。
 - 兼容 v3 默认值：边框默认色 gray-200、placeholder 颜色 gray-400、按钮 cursor:pointer；`ring`→`ring-3`、`shadow`/`rounded`/`outline-none` 等类名由官方升级工具批量改写。
 - 浏览器要求随 v4 提升至 Chrome 111 / Safari 16.4 / Firefox 128 及以上。
+
+## 2026-11-02 开启个人充值 / 兑换码 / 订阅（复用 New API 原生支付）
+- 无上游文件改动、无表结构变更；后端只改 hwao/hapi/router.go：HWAO_WEB_ROOT 模式下把 New API 支付跳回地址 /usage-logs、/wallet 302 到平台 /app/wallet（保留查询参数），避免落到未构建的 New API 前端白屏。
+- web-hwao 新增 /app/wallet「个人充值」：个人余额、订阅剩余额度、扣费顺序（subscription_first 等，PUT /api/user/self）；易支付在线充值（/api/user/amount、/api/user/pay）、兑换码（/api/user/topup）、订阅购买（/api/subscription/epay/pay）、个人 sk- 令牌（密钥只在创建后弹窗显示一次）、充值记录。
+- web-hwao 新增 /ops/payments「支付与订阅」：易支付网关/商户号/商户密钥（只写不读，留空不改）、单价、最低充值、档位、回调地址（PUT /api/option/）；合规声明确认（/api/option/payment_compliance）；兑换码生成/列表；订阅套餐增改与上下架；个人充值订单与人工补单（/api/user/topup/complete）。
+- lib/newapi-pay.ts：额度 ↔ 人民币换算（quota / quota_per_unit × usd_exchange_rate）、易支付表单提交；lib/api.ts 新增 patch()。
+- 个人额度（New API 用户 quota，供 /v1 + sk- 令牌）与企业钱包（租户映射用户 quota，供 hwk- 平台密钥与工作台）相互独立。
+- 本地联调用模拟易支付网关 runtime/mock_epay.py（仓库外，密钥在 runtime/.epay.local，600 权限，不入库）。

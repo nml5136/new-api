@@ -24,6 +24,7 @@ const groups = [
     title: "财务与安全",
     items: [
       { to: "/ops/finance", label: "对账与退款", icon: "ri-scales-3-line" },
+      { to: "/ops/payments", label: "支付与订阅", icon: "ri-secure-payment-line" },
       { to: "/ops/audit", label: "告警与审计", icon: "ri-shield-check-line" },
     ],
   },

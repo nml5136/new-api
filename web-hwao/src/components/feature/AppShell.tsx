@@ -28,6 +28,7 @@ const groups = [
     title: "财务与组织",
     items: [
       { to: "/app/billing", label: "账单充值", icon: "ri-bank-card-line" },
+      { to: "/app/wallet", label: "个人充值", icon: "ri-wallet-line" },
       { to: "/app/refunds", label: "退款开票", icon: "ri-arrow-go-back-line" },
       { to: "/app/members", label: "成员权限", icon: "ri-team-line" },
     ],

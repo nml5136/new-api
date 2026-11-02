@@ -123,6 +123,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
 export const get = <T = any>(p: string) => api<T>("GET", p);
 export const post = <T = any>(p: string, b?: unknown) => api<T>("POST", p, b ?? {});
 export const put = <T = any>(p: string, b?: unknown) => api<T>("PUT", p, b ?? {});
+export const patch = <T = any>(p: string, b?: unknown) => api<T>("PATCH", p, b ?? {});
 export const del = <T = any>(p: string) => api<T>("DELETE", p);
 
 // login 走 New API 原生登录接口：返回访问令牌（仅存内存）并写入刷新 Cookie

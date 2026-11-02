@@ -141,5 +141,17 @@ func serveWeb(r *gin.Engine) {
 	for _, p := range paths {
 		r.GET(p, h)
 	}
+	if os.Getenv("HWAO_WEB_ROOT") == "true" {
+		// New API 支付完成后的跳回地址（/usage-logs 个人充值、/wallet?pay=... 订阅）统一转到平台「个人充值」页，保留查询参数
+		toWallet := func(c *gin.Context) {
+			target := "/app/wallet"
+			if q := c.Request.URL.RawQuery; q != "" {
+				target += "?" + q
+			}
+			c.Redirect(302, target)
+		}
+		r.GET("/usage-logs", toWallet)
+		r.GET("/wallet", toWallet)
+	}
 	common.SysLog("hwao web served from " + strings.TrimSpace(dir))
 }
