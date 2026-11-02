@@ -69,3 +69,14 @@
 - lib/newapi-pay.ts：额度 ↔ 人民币换算（quota / quota_per_unit × usd_exchange_rate）、易支付表单提交；lib/api.ts 新增 patch()。
 - 个人额度（New API 用户 quota，供 /v1 + sk- 令牌）与企业钱包（租户映射用户 quota，供 hwk- 平台密钥与工作台）相互独立。
 - 本地联调用模拟易支付网关 runtime/mock_epay.py（仓库外，密钥在 runtime/.epay.local，600 权限，不入库）。
+
+## 2026-11-02 企业钱包在线充值（微信 / 支付宝，复用易支付）
+
+- 工作台「账单与充值」：仅企业管理员 / 财务可选择金额与方式（微信支付、支付宝、对公转账）；在线方式跳转易支付收银台，返回后提示并刷新；普通成员按钮禁用并提示，后端返回 403。
+- 后端：`POST /platform/recharges/online` 在 `hwao_recharge_order` 建单（kind=pay，pay_channel=`epay_wxpay`/`epay_alipay`，订单号 `EP…`）；`GET /platform/recharges/options` 返回可用方式。
+- 独立回调 `GET|POST /platform/epay/notify`：验签失败拒绝并审计；校验渠道、金额（分）、订单号；`SELECT … FOR UPDATE` 行锁 + 账本唯一 biz_no 保证幂等；成功经 `applyWallet` 入账，写审计 `recharge.online.credit`，自动纳入钱包对账。
+- 未支付订单 30 分钟过期（status=`expired`，后台任务每 30 秒扫描）；过期后到达的支付成功回调不自动入账，记 `recharge.online.late` 审计 + 严重告警，由运营核实后「手工补单」（审计 `recharge.manual`）。
+- 运营「对账与退款」：新增企业充值订单表（渠道中文、交易号、状态、时间），在线卡单 / 过期单支持手工补单。
+- 套餐卡片有效期与重置周期改为中文（个月 / 天 / 年；不重置 / 每天重置…）。
+- 数据库：无表结构变更（复用 pay_channel、status 字段的新取值），无需升级脚本。
+- 个人充值、线下对公充值行为不变。

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Badge, Button, Card, Field, Input, Modal, Notice, PageHeader, Select, Tabs } from "@/components/base/ui";
 import { get, patch, post, put } from "@/lib/api";
 import { money } from "@/lib/format";
-import { listPage, payStatus, quotaYuan, yuanQuota, type PayStatus } from "@/lib/newapi-pay";
+import { durationText, listPage, payStatus, resetText, quotaYuan, yuanQuota, type PayStatus } from "@/lib/newapi-pay";
 
 type Tab = "config" | "codes" | "plans" | "orders";
 const ts = (t?: number) => (t ? new Date(t * 1000).toLocaleString("zh-CN", { hour12: false }) : "—");
@@ -134,7 +134,7 @@ export default function OpsPaymentsPage() {
                 <div className="flex items-center justify-between"><h3 className="font-semibold">{plan.title}</h3><Badge tone={plan.enabled ? "success" : "neutral"}>{plan.enabled ? "上架" : "下架"}</Badge></div>
                 <p className="mt-1 text-xs text-foreground-500">{plan.subtitle}</p>
                 <p className="mt-3 text-2xl font-semibold">{money(plan.price_amount)}</p>
-                <p className="mt-1 text-xs text-foreground-500">{plan.duration_value} {plan.duration_unit} · 额度 {money(quotaYuan(plan.total_amount, st))} · 重置 {plan.quota_reset_period}</p>
+                <p className="mt-1 text-xs text-foreground-500">有效期 {durationText(plan.duration_value, plan.duration_unit)} · 额度 {money(quotaYuan(plan.total_amount, st))} · {resetText(plan.quota_reset_period)}</p>
                 <div className="mt-4 flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => setEdit({ ...plan, total_amount_yuan: Number(quotaYuan(plan.total_amount, st).toFixed(2)) })}>编辑</Button>
                   <Button size="sm" variant="ghost" onClick={() => run(() => patch(`/api/subscription/admin/plans/${plan.id}`, { enabled: !plan.enabled }), plan.enabled ? "已下架" : "已上架")}>{plan.enabled ? "下架" : "上架"}</Button>

@@ -50,3 +50,9 @@ export const PREF_LABEL: Record<string, string> = {
   subscription_only: "只扣订阅额度",
   wallet_only: "只扣余额",
 };
+
+// 订阅套餐时长 / 额度重置周期中文名（New API 返回英文枚举）
+export const DURATION_UNIT: Record<string, string> = { year: "年", month: "个月", day: "天", hour: "小时", custom: "（自定义）" };
+export const RESET_PERIOD: Record<string, string> = { never: "不重置", daily: "每天重置", weekly: "每周重置", monthly: "每月重置", custom: "自定义周期" };
+export const durationText = (v: number, u: string) => `${v} ${DURATION_UNIT[u] || u}`;
+export const resetText = (p: string) => RESET_PERIOD[p] || p;

@@ -63,7 +63,7 @@ const recStatus = (s: string): RecordStatus =>
 const billStatus = (s: string): UsageRecord["billing"] =>
   s === "settled" ? "settled" : s === "released" || s === "none" ? "released" : s === "reserved" ? "reserved" : "pending";
 
-const orderStatus = (s: string): Order["status"] => (s === "credited" ? "paid" : s === "closed" || s === "abnormal" ? "failed" : "pending");
+const orderStatus = (s: string): Order["status"] => (s === "credited" ? "paid" : s === "closed" || s === "abnormal" || s === "expired" ? "failed" : "pending");
 
 const refundStatus = (s: string): RefundRequest["status"] =>
   s === "pending" || s === "applied" ? "reviewing" : s === "locked" ? "locked" : s === "external" || s === "unknown" ? "refunding" : s === "done" ? "done" : "pending";
@@ -220,7 +220,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           tasks: records.slice(0, 10).map((r: UsageRecord) => ({ id: r.id, title: r.title, scene: r.scene, model: r.model, createdAt: r.time, status: r.status, cost: r.cost, recordId: r.id })),
           orders: (billing?.orders || []).map((o: any) => ({
             id: o.order_no, amount: fen2yuan(o.amount), status: orderStatus(o.status), createdAt: ts2str(o.created_at),
-            channel: o.pay_channel === "bank" ? "对公转账" : o.pay_channel || o.kind, note: o.remark || o.status,
+            // 在线渠道（epay_wxpay / epay_alipay）显示中文；过期单单独提示
+            channel: ({ bank: "对公转账", epay_wxpay: "微信支付", epay_alipay: "支付宝" } as Record<string, string>)[o.pay_channel] || o.pay_channel || o.kind,
+            note: o.status === "expired" ? "已过期（30 分钟未支付）" : (o.trade_no ? `交易号 ${o.trade_no} · ` : "") + (o.remark || o.status),
           })),
           refunds: (billing?.refunds || []).map((r: any) => ({
             id: r.refund_no, type: r.kind === "recharge_refund" ? "unused" : "verify", recordId: r.order_no || r.request_id || "",

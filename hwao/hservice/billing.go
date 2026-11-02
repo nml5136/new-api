@@ -54,7 +54,9 @@ func ConfirmRecharge(operator int, orderNo, tradeNo string, paidFen int64) (*hmo
 	if o.Status == OrderCredited {
 		return &o, nil
 	}
-	if o.Status != OrderPending {
+	// 在线支付单过期后才到账的，允许运营核实后手工补单（审计记 recharge.manual）
+	manual := IsOnlineChannel(o.PayChannel)
+	if o.Status != OrderPending && !(manual && o.Status == OrderExpired) {
 		return nil, ErrInvalid("订单状态不可入账")
 	}
 	if o.Kind == "pay" {
@@ -81,7 +83,11 @@ func ConfirmRecharge(operator int, orderNo, tradeNo string, paidFen int64) (*hmo
 		return nil, err
 	}
 	DB().Model(&o).Updates(map[string]any{"status": OrderCredited, "trade_no": tradeNo, "approved_by": operator, "credited_at": Now()})
-	Audit(operator, o.TenantId, "recharge.credit", o.OrderNo, fmt.Sprint(o.Amount), "")
+	action := "recharge.credit"
+	if manual {
+		action = "recharge.manual" // 在线支付卡单手工补单
+	}
+	Audit(operator, o.TenantId, action, o.OrderNo, fmt.Sprintf("%d 交易号 %s", o.Amount, tradeNo), "")
 	DB().First(&o, o.Id)
 	return &o, nil
 }

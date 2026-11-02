@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Badge, Button, Card, Field, Input, Modal, Notice, PageHeader, Select, Tabs } from "@/components/base/ui";
 import { get, post, put, raw } from "@/lib/api";
 import { cx, money } from "@/lib/format";
-import { listPage, payStatus, PREF_LABEL, quotaYuan, submitPayForm, type PayStatus } from "@/lib/newapi-pay";
+import { listPage, payStatus, PREF_LABEL, quotaYuan, submitPayForm, type PayStatus, durationText, resetText } from "@/lib/newapi-pay";
 
 type Tab = "topup" | "plans" | "tokens" | "records";
 const ts = (t?: number) => (t ? new Date(t * 1000).toLocaleString("zh-CN", { hour12: false }) : "—");
@@ -196,9 +196,9 @@ export default function WalletPage() {
               <p className="mt-1 text-xs text-foreground-500">{plan.subtitle}</p>
               <p className="mt-4 text-3xl font-semibold text-foreground-900">{money(plan.price_amount)}</p>
               <ul className="mt-3 space-y-1 text-xs text-foreground-700">
-                <li>有效期：{plan.duration_value} {({ year: "年", month: "个月", day: "天", hour: "小时", custom: "（自定义）" } as any)[plan.duration_unit] || plan.duration_unit}</li>
+                <li>有效期：{durationText(plan.duration_value, plan.duration_unit)}</li>
                 <li>包含额度：{plan.total_amount ? money(quotaYuan(plan.total_amount, st)) : "不限"}</li>
-                <li>额度重置：{({ never: "不重置", daily: "每天", weekly: "每周", monthly: "每月" } as any)[plan.quota_reset_period] || plan.quota_reset_period}</li>
+                <li>额度重置：{resetText(plan.quota_reset_period)}</li>
               </ul>
               <div className="mt-auto flex gap-2 pt-5">
                 <Button className="flex-1" disabled={busy || !online || !method}

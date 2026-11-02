@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { get, post } from "@/lib/api";
+import { submitPayForm } from "@/lib/newapi-pay";
 import { Badge, Button, Card, Modal, Notice, PageHeader, ProgressBar, Tabs } from "@/components/base/ui";
 import { useDemo } from "@/lib/demo-store";
 import { billingStatusMeta, cx, money, recordStatusMeta, sceneLabel } from "@/lib/format";
@@ -7,7 +9,28 @@ import { billingStatusMeta, cx, money, recordStatusMeta, sceneLabel } from "@/li
 type Tab = "orders" | "spend" | "ledger";
 
 export default function BillingPage() {
-  const { balance, monthSpend, monthBudget, reserved, orders, records, createRecharge, settleOrder, failOrder } = useDemo();
+  const { balance, monthSpend, monthBudget, reserved, orders, records, createRecharge, settleOrder, failOrder, me } = useDemo();
+  // 仅企业管理员 / 财务可为企业充值（后端同样校验）
+  const canPay = me?.role === "tenant_admin" || me?.role === "tenant_finance";
+  // 支付方式：wxpay / alipay 在线支付（易支付），bank 线下对公转账
+  const [method, setMethod] = useState("bank");
+  const [online, setOnline] = useState<{ type: string; name: string }[]>([]);
+  const [sp, setSp] = useSearchParams();
+  const [returned, setReturned] = useState(sp.get("pay_return") || "");
+  useEffect(() => {
+    get<any>("/platform/recharges/options").then((r) => {
+      setOnline(r?.methods || []);
+      if (r?.methods?.length) setMethod(r.methods[0].type);
+    }).catch(() => setOnline([]));
+  }, []);
+  useEffect(() => {
+    // 从收银台跳回：刷新订单与余额，去掉地址栏参数
+    if (sp.get("pay_return")) {
+      void settleOrder("");
+      setSp({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [tab, setTab] = useState<Tab>("orders");
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"choose" | "pay" | "processing" | "done" | "delayed" | "failed">("choose");
@@ -53,11 +76,18 @@ export default function BillingPage() {
     setPhase(0);
   };
 
-  // start 提交线下对公转账充值申请；运营确认到账后入账，前端不模拟支付结果
+  // start 在线支付：hwao 后端建单并向易支付下单，前端提交签名表单跳转收银台（入账以异步回调为准）；
+  // 线下：提交对公转账充值申请，运营确认到账后入账。前端不模拟支付结果、不接触任何密钥。
   const start = async () => {
     setStep("processing");
     setPhase(0);
     try {
+      if (method !== "bank") {
+        const r = await post<any>("/platform/recharges/online", { amount: Math.round(amount * 100), method });
+        setOrderId(r.order.order_no);
+        submitPayForm(r.url, r.params);
+        return;
+      }
       const id = await createRecharge(amount);
       setOrderId(id);
       setStep("delayed");
@@ -75,6 +105,14 @@ export default function BillingPage() {
         description="任务与 API 调用共用同一份企业钱包。充值只入账一次，重复回调不会让余额再次增长。"
       />
 
+      {returned ? (
+        <Notice tone="primary" className="mb-4">
+          已从收银台返回（订单 {returned}）。到账以支付平台回调为准，通常几秒内入账；同一订单只入账一次，请勿重复付款。
+          <button type="button" className="ml-2 text-primary-600 underline" onClick={() => setReturned("")}>知道了</button>
+        </Notice>
+      ) : null}
+      {!canPay && me ? <Notice tone="neutral" className="mb-4">企业充值仅限企业管理员或财务成员操作，你可以查看余额与消费明细。</Notice> : null}
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr]">
         <div className="relative overflow-hidden rounded-2xl bg-background-950 p-5 text-background-50 md:p-6">
           <div className="pointer-events-none absolute -right-10 -top-16 h-[200px] w-[200px] rounded-full bg-primary-500/25 blur-[70px]" />
@@ -89,6 +127,8 @@ export default function BillingPage() {
                 </p>
               </div>
               <Button
+                disabled={!canPay}
+                title={canPay ? undefined : "仅企业管理员或财务可为企业充值"}
                 onClick={() => {
                   setOpen(true);
                   setStep("choose");
@@ -160,7 +200,7 @@ export default function BillingPage() {
             value={tab}
             onChange={setTab}
           />
-          <span className="text-[10px] text-foreground-400">一期为线下对公转账 · 运营确认到账后入账</span>
+          <span className="text-[10px] text-foreground-400">{online.length ? "支持微信 / 支付宝在线支付（自动入账）与对公转账" : "线下对公转账 · 运营确认到账后入账"}</span>
         </div>
 
         {tab === "orders" ? (
@@ -249,7 +289,7 @@ export default function BillingPage() {
         open={open}
         onClose={reset}
         title={step === "choose" ? "充值企业钱包" : step === "pay" ? "确认支付" : step === "processing" ? "支付处理中" : "充值结果"}
-        description={step === "choose" ? "选择充值金额，提交后线下对公转账。" : "充值订单由运营核对到账后确认入账。"}
+        description={step === "choose" ? "选择充值金额与支付方式。" : method === "bank" ? "充值订单由运营核对到账后确认入账。" : "跳转收银台付款，支付成功后自动入账。"}
         footer={
           step === "choose" ? (
             <>
@@ -259,7 +299,7 @@ export default function BillingPage() {
           ) : step === "pay" ? (
             <>
               <Button variant="outline" onClick={() => setStep("choose")}>上一步</Button>
-              <Button onClick={() => void start()}>提交充值申请</Button>
+              <Button onClick={() => void start()}>{method === "bank" ? "提交充值申请" : "去支付"}</Button>
             </>
           ) : step === "delayed" ? (
             <>
@@ -316,6 +356,19 @@ export default function BillingPage() {
                 />
               </div>
             </label>
+            <div>
+              <span className="mb-1.5 block text-[11px] font-medium text-foreground-700">支付方式</span>
+              <div className="grid grid-cols-3 gap-2">
+                {[...online.map((m) => ({ id: m.type, label: m.name, icon: m.type === "wxpay" ? "ri-wechat-pay-line" : "ri-alipay-line" })), { id: "bank", label: "对公转账", icon: "ri-bank-line" }].map((m) => (
+                  <button key={m.id} type="button" onClick={() => setMethod(m.id)}
+                    className={cx("flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[11.5px] transition-colors",
+                      method === m.id ? "border-primary-400 bg-primary-50 text-primary-700" : "border-background-200 text-foreground-700 hover:border-background-300")}>
+                    <i className={m.icon} />{m.label}
+                  </button>
+                ))}
+              </div>
+              {!online.length ? <p className="mt-1.5 text-[10px] text-foreground-400">运营尚未开通在线支付，当前仅支持对公转账。</p> : null}
+            </div>
             <div className="rounded-xl bg-background-100/70 p-3 text-[10.5px] leading-relaxed text-foreground-600">
               <div className="flex justify-between"><span>支付金额</span><span className="tnum font-medium text-foreground-900">{money(amount)}</span></div>
               <div className="mt-1.5 flex justify-between"><span>入账可用额度</span><span className="tnum font-medium text-foreground-900">{money(amount)}</span></div>
@@ -327,18 +380,18 @@ export default function BillingPage() {
         {step === "pay" ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-background-200 p-4 text-center">
-              <p className="text-[11px] text-foreground-500">转账金额</p>
+              <p className="text-[11px] text-foreground-500">{method === "bank" ? "转账金额" : "支付金额"}</p>
               <p className="tnum mt-1 font-heading text-3xl font-semibold text-foreground-950">{money(amount)}</p>
               <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-1 text-[10px] text-warning">
-                <i className="ri-flask-line" />
-                线下对公转账 · 运营确认到账后入账
+                <i className={method === "bank" ? "ri-bank-line" : "ri-secure-payment-line"} />
+                {method === "bank" ? "线下对公转账 · 运营确认到账后入账" : `${method === "wxpay" ? "微信支付" : "支付宝"} · 支付成功后自动入账 · 订单 30 分钟内有效`}
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button className="flex-1" onClick={() => void start()}>提交充值申请</Button>
+              <Button className="flex-1" onClick={() => void start()}>{method === "bank" ? "提交充值申请" : "去支付"}</Button>
             </div>
             <p className="text-[10px] leading-relaxed text-foreground-500">
-              提交后请按运营提供的对公账户转账并备注订单号；同一订单只入账一次。
+              {method === "bank" ? "提交后请按运营提供的对公账户转账并备注订单号；同一订单只入账一次。" : "将跳转到支付平台收银台；同一订单只入账一次，超时未付自动过期。"}
             </p>
           </div>
         ) : null}
@@ -348,7 +401,7 @@ export default function BillingPage() {
             <div className="flex flex-col items-center text-center">
               <i className="ri-loader-4-line mb-3 animate-spin text-2xl text-primary-500" />
               <p className="text-sm font-medium text-foreground-950">
-                正在提交充值申请
+                {method === "bank" ? "正在提交充值申请" : "正在跳转收银台"}
               </p>
               <p className="mt-1 text-[11px] text-foreground-500">订单号 {orderId}</p>
             </div>

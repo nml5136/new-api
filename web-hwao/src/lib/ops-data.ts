@@ -13,7 +13,7 @@ const alertLevel: Record<string, string> = { critical: "严重", warn: "警告",
 const alertStatus: Record<string, string> = { open: "待处理", handling: "处理中", resolved: "已恢复" };
 const diffKind: Record<string, string> = { pay_vs_newapi: "支付对账", newapi_vs_platform: "消费对账", upstream_vs_platform: "上游采购" };
 const diffStatus: Record<string, string> = { open: "待核对", resolved: "已处理", ignored: "已忽略" };
-const orderStatus: Record<string, string> = { unpaid: "待到账", confirming: "确认中", crediting: "入账中", credited: "已入账", closed: "已关闭", abnormal: "异常待核对" };
+const orderStatus: Record<string, string> = { unpaid: "待到账", confirming: "确认中", crediting: "入账中", pending: "待到账", expired: "已过期", credited: "已入账", closed: "已关闭", abnormal: "异常待核对" };
 const refundStatus: Record<string, string> = { pending: "待审核", locked: "额度锁定", external: "外部退款中", done: "已完成", failed: "已失败", unknown: "结果待确认", rejected: "已驳回" };
 
 export interface OpsRaw {

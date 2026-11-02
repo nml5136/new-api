@@ -34,6 +34,8 @@ func userAuthThen(c *gin.Context, fn func()) {
 func SetRouter(r *gin.Engine) {
 	r.Use(Gateway())
 	r.GET("/platform/requests/:id", getRequest) // 平台密钥或登录态
+	r.GET("/platform/epay/notify", epayNotify)    // 企业在线充值回调（验签，无需登录）
+	r.POST("/platform/epay/notify", epayNotify)
 
 	u := r.Group("/platform", middleware.UserAuth())
 	u.GET("/me", me)
@@ -68,6 +70,8 @@ func SetRouter(r *gin.Engine) {
 	u.GET("/billing", billingOverview)
 	u.POST("/refunds", applyRefund)
 	u.POST("/recharges", applyRecharge)
+	u.GET("/recharges/options", payOptions)
+	u.POST("/recharges/online", onlineRecharge)
 	u.POST("/feedback", submitFeedback)
 
 	o := r.Group("/platform/ops", middleware.AdminAuth())

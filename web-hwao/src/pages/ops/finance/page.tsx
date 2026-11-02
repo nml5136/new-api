@@ -7,6 +7,8 @@ import { cx } from "@/lib/format";
 type Item = { key: string; kind: "diff" | "order" | "refund"; type: string; subject: string; platform: string; external: string; diff: string; status: string; raw: any };
 
 const tabMap: Record<string, string> = { payment: "支付对账", consume: "消费对账", purchase: "上游采购", refund: "退款" };
+// 充值渠道中文名：在线（易支付微信/支付宝）与线下
+const channelName = (c: string) => ({ epay_wxpay: "微信支付", epay_alipay: "支付宝", bank: "对公转账", transfer: "对公转账", manual: "其他线下" } as Record<string, string>)[c] || c || "—";
 
 export default function OpsFinancePage() {
   const { opsFinanceDiffs, opsOrders, opsRefunds, yuan, act, notice, error, loading, raw } = useOps();
@@ -32,7 +34,7 @@ export default function OpsFinancePage() {
     ...opsFinanceDiffs.map((d) => ({ key: `d-${d.id}`, kind: "diff" as const, type: d.type, subject: d.subject, platform: d.platform, external: d.external, diff: d.diff, status: d.status, raw: d.raw })),
     ...opsOrders.filter((o: any) => o.status !== "credited" && o.status !== "closed").map((o: any) => ({
       key: `o-${o.order_no}`, kind: "order" as const, type: "支付对账", subject: `${o.order_no} · ${o.tenantName}`, platform: yuan(o.amount), external: o.trade_no || "未回传",
-      diff: o.kind === "grant" ? "审批发放待确认" : "待确认到账", status: o.statusText, raw: o,
+      diff: o.kind === "grant" ? "审批发放待确认" : o.status === "expired" ? `${channelName(o.pay_channel)} · 已过期，如已实际到账可核实后补单` : o.pay_channel?.startsWith("epay_") ? `${channelName(o.pay_channel)} · 等待支付回调（卡单可手工补单）` : "待确认到账", status: o.statusText, raw: o,
     })),
     ...opsRefunds.map((r: any) => ({
       key: `r-${r.refund_no}`, kind: "refund" as const, type: "退款", subject: `${r.refund_no} · ${r.tenantName}`, platform: yuan(r.amount), external: r.external_no || "—",
@@ -69,7 +71,8 @@ export default function OpsFinancePage() {
             <Field label="第三方交易号 / 银行流水号"><Input value={tradeNo} onChange={(e) => setTradeNo(e.target.value)} /></Field>
             <Field label="实收金额（元）"><Input type="number" value={paid} onChange={(e) => setPaid(e.target.value)} placeholder={(r.amount / 100).toFixed(2)} /></Field>
           </div>
-          <Button size="sm" disabled={!tradeNo} onClick={() => void act("POST", `/recharges/${r.order_no}/confirm`, { trade_no: tradeNo, paid: Math.round((Number(paid || r.amount / 100) || 0) * 100) }, "到账已确认，额度入账中")}>确认到账并入账</Button>
+          <Button size="sm" disabled={!tradeNo} onClick={() => void act("POST", `/recharges/${r.order_no}/confirm`, { trade_no: tradeNo, paid: Math.round((Number(paid || r.amount / 100) || 0) * 100) }, r.pay_channel?.startsWith("epay_") ? "已手工补单入账（已记审计）" : "到账已确认，额度入账中")}>{r.pay_channel?.startsWith("epay_") ? "核实后手工补单" : "确认到账并入账"}</Button>
+          {r.pay_channel?.startsWith("epay_") ? <p className="text-[10px] text-foreground-500">在线支付卡单：请在支付平台核实交易号与实收金额后补单，操作写入审计（recharge.manual）。</p> : null}
         </div>
       );
     }
@@ -198,6 +201,29 @@ export default function OpsFinancePage() {
           </Card>
         ) : null}
       </div>
+      {/* 全部充值订单：在线（微信/支付宝）与线下，展示渠道与第三方交易号，便于对账 */}
+      <Card className="mt-4 overflow-hidden">
+        <div className="border-b border-background-200 px-4 py-3">
+          <h2 className="text-[11.5px] font-semibold text-foreground-950">企业充值订单</h2>
+          <p className="mt-0.5 text-[10px] text-foreground-500">在线支付成功回调自动入账；对公转账需确认到账。重复回调不会重复入账。</p>
+        </div>
+        <div className="hidden grid-cols-[1.5fr_1fr_0.8fr_0.8fr_1.5fr_0.8fr_1fr] gap-3 bg-background-100/50 px-4 py-2 text-[10px] text-foreground-500 md:grid">
+          <span>订单号</span><span>企业</span><span>渠道</span><span className="text-right">金额</span><span>交易号</span><span>状态</span><span>创建时间</span>
+        </div>
+        <div className="divide-y divide-background-100">
+          {opsOrders.slice(0, 50).map((o: any) => (
+            <div key={o.order_no} className="grid grid-cols-1 gap-1 px-4 py-2.5 text-[10.5px] md:grid-cols-[1.5fr_1fr_0.8fr_0.8fr_1.5fr_0.8fr_1fr] md:items-center md:gap-3">
+              <span className="truncate font-mono-ui text-foreground-800">{o.order_no}</span>
+              <span className="truncate text-foreground-700">{o.tenantName}</span>
+              <span className="text-foreground-700">{o.kind === "grant" ? "审批发放" : channelName(o.pay_channel)}</span>
+              <span className="tnum text-foreground-900 md:text-right">{yuan(o.amount)}</span>
+              <span className="truncate font-mono-ui text-foreground-500">{o.trade_no || "—"}</span>
+              <span><Badge tone={o.status === "credited" ? "success" : o.status === "pending" ? "warning" : "neutral"}>{o.statusText}</Badge></span>
+              <span className="text-foreground-500">{new Date(o.created_at * 1000).toLocaleString("zh-CN", { hour12: false })}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
       <Modal
         open={rcOpen}
         onClose={() => setRcOpen(false)}

@@ -44,6 +44,7 @@ func StartJobs() {
 		hservice.SyncDuePrices()
 		hservice.CheckBudgetAlerts()
 		ReconPendingRequests()
+		hservice.ExpireOnlineOrders() // 在线充值单 30 分钟未付过期
 	})
 	go loop(10*time.Minute, func() {
 		hservice.BlockExpiredModels()
