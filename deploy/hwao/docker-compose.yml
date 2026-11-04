@@ -1,0 +1,52 @@
+# hwao router 生产部署：mariadb + redis + app 三个容器
+# 数据目录：/app/data（mysql、redis、app），配置目录：/app/conf（app.env、db.env，权限 600）
+# 仅 app 对外暴露端口（宿主机 38000 -> 容器 3000），数据库和 Redis 只在容器内网可访问
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: hwao-mariadb
+    restart: unless-stopped
+    env_file: /app/conf/db.env
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--max-connections=500"]
+    volumes:
+      - /app/data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: hwao-redis
+    restart: unless-stopped
+    # Redis 密码从配置目录读取
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$(cat /conf/redis.pass)\""]
+    volumes:
+      - /app/data/redis:/data
+      - /app/conf/redis.pass:/conf/redis.pass:ro
+    healthcheck:
+      test: ["CMD", "sh", "-c", "redis-cli -a \"$$(cat /conf/redis.pass)\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: hwao-router:latest
+    container_name: hwao-app
+    restart: unless-stopped
+    env_file: /app/conf/app.env
+    ports:
+      - "38000:3000"
+    volumes:
+      - /app/data/app:/data
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:3000/api/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 10

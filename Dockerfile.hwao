@@ -1,0 +1,40 @@
+# hwao router 生产镜像（多阶段构建）：前端 web-hwao + Go 后端，后端直接托管前端静态文件
+# 构建：docker build -f Dockerfile.hwao -t hwao-router:latest .
+# 国内服务器默认使用 npmmirror / goproxy.cn 加速，可通过 build-arg 覆盖
+
+# ---------- 阶段一：构建 hwao 前端 ----------
+FROM node:22-alpine AS web
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+WORKDIR /build/web-hwao
+COPY web-hwao/package.json web-hwao/package-lock.json ./
+RUN npm config set registry ${NPM_REGISTRY} && npm ci --no-audit --no-fund
+COPY web-hwao/ ./
+RUN npm run build
+
+# ---------- 阶段二：构建 Go 后端 ----------
+FROM golang:1.26.10-alpine AS go
+ARG GOPROXY=https://goproxy.cn,direct
+ENV GO111MODULE=on CGO_ENABLED=0 GOWORK=off GOPROXY=${GOPROXY}
+WORKDIR /build
+COPY go.mod go.sum ./
+COPY relaykit/go.mod ./relaykit/go.mod
+COPY tokenkit/go.mod ./tokenkit/go.mod
+RUN go mod download
+COPY . .
+# 原版 web/dist 通过 go:embed 打包；hwao 使用 HWAO_WEB_DIR 外部目录，此处放占位页满足编译
+RUN mkdir -p web/dist && [ -f web/dist/index.html ] || echo '<!doctype html><title>hwao</title>' > web/dist/index.html
+RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)-hwao'" -o /out/new-api
+
+# ---------- 阶段三：运行镜像 ----------
+FROM debian:bookworm-slim
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata wget \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=go /out/new-api /new-api
+# 前端静态文件放在镜像内，由后端托管
+COPY --from=web /build/web-hwao/dist /web-dist
+ENV TZ=Asia/Shanghai PORT=3000 HWAO_WEB_DIR=/web-dist HWAO_WEB_ROOT=true
+EXPOSE 3000
+WORKDIR /data
+ENTRYPOINT ["/new-api"]
+CMD ["--port", "3000", "--log-dir", "/data/logs"]

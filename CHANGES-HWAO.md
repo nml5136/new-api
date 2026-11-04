@@ -80,3 +80,7 @@
 - 套餐卡片有效期与重置周期改为中文（个月 / 天 / 年；不重置 / 每天重置…）。
 - 数据库：无表结构变更（复用 pay_channel、status 字段的新取值），无需升级脚本。
 - 个人充值、线下对公充值行为不变。
+
+## 生产部署（Docker）
+- 新增 Dockerfile.hwao（多阶段：web-hwao 前端 + Go 后端，国内镜像加速）
+- 新增 deploy/hwao/docker-compose.yml 与 README：mariadb + redis + app，数据 /app/data，配置 /app/conf，对外端口 38000
